@@ -1,0 +1,31 @@
+'use client';
+
+import { motion } from 'framer-motion';
+import type { Color, PieceSymbol } from 'chess.js';
+
+const GLYPHS: Record<Color, Record<PieceSymbol, string>> = {
+  w: { k: '♔', q: '♕', r: '♖', b: '♗', n: '♘', p: '♙' },
+  b: { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' }
+};
+
+interface ChessPieceProps {
+  type: PieceSymbol;
+  color: Color;
+  isLifted?: boolean;
+}
+
+export function ChessPiece({ type, color, isLifted }: ChessPieceProps) {
+  return (
+    <motion.div
+      layout
+      transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+      className={`select-none pointer-events-none flex items-center justify-center w-full h-full text-[clamp(28px,6vw,52px)] leading-none drop-shadow-[0_3px_2px_rgba(0,0,0,0.45)] ${
+        color === 'w' ? 'text-ivory' : 'text-espresso-950'
+      } ${isLifted ? 'scale-110 -translate-y-1' : ''}`}
+      style={{ transition: 'transform 120ms ease-out' }}
+      aria-label={`${color === 'w' ? 'White' : 'Black'} ${type}`}
+    >
+      {GLYPHS[color][type]}
+    </motion.div>
+  );
+}
