@@ -72,11 +72,14 @@ Royal64 runs fully without any env vars — multiplayer rooms and QR codes
 still work, but move sync will show "Realtime provider not configured"
 instead of connecting.
 
+`@supabase/supabase-js` is already listed as a dependency (needed so the
+build compiles even before you configure it) — it stays inert until the
+two env vars above are set.
+
 To wire up real multiplayer:
 1. Create a free project at [supabase.com](https://supabase.com)
 2. Enable Realtime on your project
-3. Add `npm install @supabase/supabase-js`
-4. Set the two env vars above
+3. Set the two env vars above
 
 ---
 
