@@ -7,7 +7,9 @@ export function MoveHistory() {
 
   const pairs: Array<[string, string | undefined]> = [];
   for (let i = 0; i < moveList.length; i += 2) {
-    pairs.push([moveList[i], moveList[i + 1]]);
+    const white = moveList[i];
+    const black = moveList[i + 1];
+    if (white) pairs.push([white, black]);
   }
 
   return (

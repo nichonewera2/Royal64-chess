@@ -27,8 +27,10 @@ export function ChessBoard({
     null
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- moveList.length intentionally
-  // triggers a re-derive of the board snapshot after each move commits.
+  // moveList.length is intentionally in the deps: it forces a re-derive of
+  // the board snapshot after each move commits, even though `engine` itself
+  // is the same mutable instance.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const board = useMemo(() => engine.board(), [engine, moveList.length]);
   const lastMove = engine.history[engine.history.length - 1];
   const isInCheck = status === 'check' || status === 'checkmate';
