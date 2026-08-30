@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { Cpu, Users, LogIn, Plus, ScanLine, Puzzle, ArrowLeft, Eye } from 'lucide-react';
 import { ComputerGame } from './ComputerGame';
 import { LocalGame } from './LocalGame';
+import { PuzzleMode } from './PuzzleMode';
+import { QRScanner } from './QRScanner';
 import { RoomShareModal } from './RoomShareModal';
 import { generateGameId, isValidGameId } from '@/lib/chess/gameId';
 import { useToastStore } from '@/components/ui/Toast';
@@ -13,13 +15,13 @@ import { useToastStore } from '@/components/ui/Toast';
 type PortalMode = 'menu' | 'computer' | 'local' | 'create' | 'join' | 'scan' | 'puzzle' | 'watch';
 
 const MODE_CARDS: Array<{ mode: PortalMode; icon: React.ReactNode; title: string; group: string }> = [
-  { mode: 'create', icon: <Plus size={20} />, title: 'Create Game', group: 'Play Online' },
-  { mode: 'join', icon: <LogIn size={20} />, title: 'Join Game', group: 'Play Online' },
-  { mode: 'scan', icon: <ScanLine size={20} />, title: 'Scan QR', group: 'Play Online' },
-  { mode: 'watch', icon: <Eye size={20} />, title: 'Tonton Pertandingan', group: 'Play Online' },
-  { mode: 'computer', icon: <Cpu size={20} />, title: 'Play vs Computer', group: 'Play Offline' },
-  { mode: 'local', icon: <Users size={20} />, title: 'Local 2 Player', group: 'Play Offline' },
-  { mode: 'puzzle', icon: <Puzzle size={20} />, title: 'Puzzle Mode', group: 'Practice' }
+  { mode: 'create', icon: <Plus size={20} />, title: 'Buat Ruang', group: 'Main Online' },
+  { mode: 'join', icon: <LogIn size={20} />, title: 'Gabung Ruang', group: 'Main Online' },
+  { mode: 'scan', icon: <ScanLine size={20} />, title: 'Pindai QR', group: 'Main Online' },
+  { mode: 'watch', icon: <Eye size={20} />, title: 'Tonton Pertandingan', group: 'Main Online' },
+  { mode: 'computer', icon: <Cpu size={20} />, title: 'Lawan Komputer', group: 'Main Offline' },
+  { mode: 'local', icon: <Users size={20} />, title: 'Lokal 2 Pemain', group: 'Main Offline' },
+  { mode: 'puzzle', icon: <Puzzle size={20} />, title: 'Mode Puzzle', group: 'Latihan' }
 ];
 
 export function GamePortalClient({ initialMode }: { initialMode?: string }) {
@@ -42,7 +44,7 @@ export function GamePortalClient({ initialMode }: { initialMode?: string }) {
   function handleJoin() {
     const trimmed = joinInput.trim().toUpperCase();
     if (!isValidGameId(trimmed)) {
-      push('That game could not be found.', 'error');
+      push('Ruang permainan tidak ditemukan.', 'error');
       return;
     }
     router.push(`/game/${trimmed}?seat=b`);
@@ -51,58 +53,41 @@ export function GamePortalClient({ initialMode }: { initialMode?: string }) {
   function handleWatch() {
     const trimmed = watchInput.trim().toUpperCase();
     if (!isValidGameId(trimmed)) {
-      push('That game could not be found.', 'error');
+      push('Ruang permainan tidak ditemukan.', 'error');
       return;
     }
     router.push(`/game/${trimmed}?watch=1`);
   }
 
-  if (mode === 'computer') return <PortalShell title="Vs Computer"><ComputerGame /></PortalShell>;
-  if (mode === 'local') return <PortalShell title="Local 2 Player"><LocalGame /></PortalShell>;
+  if (mode === 'computer') return <PortalShell title="Lawan Komputer"><ComputerGame /></PortalShell>;
+  if (mode === 'local') return <PortalShell title="Lokal 2 Pemain"><LocalGame /></PortalShell>;
 
   if (mode === 'puzzle') {
     return (
-      <PortalShell title="Puzzle Mode">
-        <div className="text-center text-parchment-300/70 max-w-md mx-auto py-16">
-          <Puzzle className="mx-auto mb-4 text-gold-400" size={32} />
-          <p>
-            Puzzle mode is coming to Royal64 soon — curated tactics with graded
-            difficulty. For now, sharpen up in Local 2 Player or against the AI.
-          </p>
-        </div>
+      <PortalShell title="Mode Puzzle">
+        <PuzzleMode />
       </PortalShell>
     );
   }
 
   if (mode === 'scan') {
     return (
-      <PortalShell title="Scan QR">
-        <div className="text-center text-parchment-300/70 max-w-md mx-auto py-16">
-          <ScanLine className="mx-auto mb-4 text-gold-400" size={32} />
-          <p>
-            Camera-based QR scanning requires camera permission this preview
-            environment can&apos;t grant. Use{' '}
-            <button className="underline text-gold-400" onClick={() => setMode('join')}>
-              Join with ID
-            </button>{' '}
-            instead, or scan the code with your phone&apos;s native camera app — it
-            will open the join link directly.
-          </p>
-        </div>
+      <PortalShell title="Pindai QR">
+        <QRScanner />
       </PortalShell>
     );
   }
 
   if (mode === 'create') {
     return (
-      <PortalShell title="Create Game">
+      <PortalShell title="Buat Ruang">
         <div className="text-center max-w-md mx-auto py-16">
           {!createdId ? (
             <button
               onClick={handleCreate}
               className="bg-gold-500 hover:bg-gold-400 text-espresso-950 font-medium px-6 py-3 rounded-lg"
             >
-              Generate Game ID
+              Buat Game ID
             </button>
           ) : (
             <RoomShareModal gameId={createdId} onClose={() => router.push(`/game/${createdId}`)} />
@@ -114,7 +99,7 @@ export function GamePortalClient({ initialMode }: { initialMode?: string }) {
 
   if (mode === 'join') {
     return (
-      <PortalShell title="Join Game">
+      <PortalShell title="Gabung Ruang">
         <div className="max-w-sm mx-auto py-16 flex flex-col gap-3">
           <label className="text-sm text-parchment-300/70" htmlFor="gameId">
             Game ID
@@ -130,7 +115,7 @@ export function GamePortalClient({ initialMode }: { initialMode?: string }) {
             onClick={handleJoin}
             className="bg-gold-500 hover:bg-gold-400 text-espresso-950 font-medium px-4 py-3 rounded-lg"
           >
-            Join Game
+            Gabung
           </button>
         </div>
       </PortalShell>
@@ -168,7 +153,7 @@ export function GamePortalClient({ initialMode }: { initialMode?: string }) {
 
   return (
     <PortalShell title="Royal64 Game Portal">
-      {['Play Online', 'Play Offline', 'Practice'].map((group) => (
+      {['Main Online', 'Main Offline', 'Latihan'].map((group) => (
         <div key={group} className="mb-8">
           <h2 className="font-display text-xl text-parchment-100 mb-3">{group}</h2>
           <div className="grid sm:grid-cols-3 gap-4">

@@ -10,6 +10,11 @@ import { ChessBoard } from './ChessBoard';
 import { ChessSidebar } from './ChessSidebar';
 
 const DIFFICULTIES: Difficulty[] = ['beginner', 'club', 'expert'];
+const DIFFICULTY_LABEL: Record<Difficulty, string> = {
+  beginner: 'Pemula',
+  club: 'Menengah',
+  expert: 'Mahir'
+};
 
 export function ComputerGame() {
   const { fen, engine, status, resetGame, playMove } = useGameStore();
@@ -57,21 +62,23 @@ export function ComputerGame() {
                   : 'bg-transparent text-parchment-200 border-walnut-700 hover:border-gold-500/60'
               }`}
             >
-              {d}
+              {DIFFICULTY_LABEL[d]}
             </button>
           ))}
         </div>
         <ChessBoard locked={engine.turn === 'b' || thinking} />
         {thinking && (
           <p className="text-parchment-300/70 text-sm italic">
-            {opponent.label} is thinking…
+            {opponent.label} sedang berpikir…
           </p>
         )}
       </div>
       <ChessSidebar
         whiteName={playerName}
-        blackName={`${opponent.label} · ${difficulty}`}
+        blackName={`${opponent.label} · ${DIFFICULTY_LABEL[difficulty]}`}
         youAre="w"
+        controlsYouAre="w"
+        opponentIsComputer
       />
     </div>
   );

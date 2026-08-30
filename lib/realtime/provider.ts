@@ -44,7 +44,25 @@ export interface IdentityPayload {
   role: 'w' | 'b' | 'spectator';
 }
 
-type EventName = 'move' | 'chat' | 'identity' | 'resign' | 'draw-offer' | 'draw-response';
+export interface JoinRequestPayload {
+  playerId: string;
+  name: string;
+}
+
+export interface JoinDecisionPayload {
+  playerId: string;
+}
+
+type EventName =
+  | 'move'
+  | 'chat'
+  | 'identity'
+  | 'resign'
+  | 'draw-offer'
+  | 'draw-response'
+  | 'join-request'
+  | 'join-approved'
+  | 'join-declined';
 
 export interface RealtimeProvider {
   readonly name: string;
@@ -146,7 +164,17 @@ class SupabaseRealtimeProvider implements RealtimeProvider {
     this.client = createClient(url, key);
     this.channel = this.client.channel(`room:${gameId}`);
 
-    const events: EventName[] = ['move', 'chat', 'identity', 'resign', 'draw-offer', 'draw-response'];
+    const events: EventName[] = [
+      'move',
+      'chat',
+      'identity',
+      'resign',
+      'draw-offer',
+      'draw-response',
+      'join-request',
+      'join-approved',
+      'join-declined'
+    ];
     for (const event of events) {
       this.channel.on('broadcast', { event }, ({ payload }: any) => {
         this.eventListeners.get(event)?.forEach((cb) => cb(payload));

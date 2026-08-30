@@ -15,10 +15,10 @@ export function MoveHistory() {
   return (
     <div className="bg-espresso-900/60 bg-[url('/textures/wood-grain.svg')] bg-cover bg-blend-multiply border border-walnut-700 rounded-lg p-3 max-h-64 overflow-y-auto">
       <h3 className="font-display text-parchment-100 text-sm uppercase tracking-wide mb-2 opacity-80">
-        Move History
+        Riwayat Langkah
       </h3>
       {pairs.length === 0 ? (
-        <p className="text-parchment-300/60 text-sm italic">No moves yet — history will appear here.</p>
+        <p className="text-parchment-300/60 text-sm italic">Belum ada langkah — riwayat akan tampil di sini.</p>
       ) : (
         <ol className="grid grid-cols-[2rem_1fr_1fr] gap-y-1 text-sm font-mono text-parchment-100">
           {pairs.map(([white, black], idx) => (

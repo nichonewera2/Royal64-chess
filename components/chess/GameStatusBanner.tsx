@@ -4,15 +4,15 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useGameStore } from '@/lib/store/gameStore';
 
 const MESSAGES: Record<string, string> = {
-  check: 'Check!',
-  checkmate: 'Checkmate',
-  stalemate: 'Stalemate — Draw',
-  draw_50move: 'Draw — 50-move rule',
-  draw_repetition: 'Draw — Threefold repetition',
-  draw_insufficient_material: 'Draw — Insufficient material',
-  draw_agreement: 'Draw agreed',
-  resigned: 'Resignation',
-  timeout: 'Time out'
+  check: 'Skak!',
+  checkmate: 'Skakmat',
+  stalemate: 'Seri — Buntu (Stalemate)',
+  draw_50move: 'Seri — Aturan 50 langkah',
+  draw_repetition: 'Seri — Pengulangan posisi',
+  draw_insufficient_material: 'Seri — Bidak tidak cukup',
+  draw_agreement: 'Seri disepakati',
+  resigned: 'Menyerah',
+  timeout: 'Waktu habis'
 };
 
 export function GameStatusBanner() {
@@ -21,7 +21,11 @@ export function GameStatusBanner() {
 
   const message = MESSAGES[status] ?? status;
   const suffix =
-    status === 'checkmate' && winner ? ` — ${winner === 'w' ? 'White' : 'Black'} wins` : '';
+    status === 'checkmate' || status === 'resigned' || status === 'timeout'
+      ? winner
+        ? ` — ${winner === 'w' ? 'Putih' : 'Hitam'} menang`
+        : ''
+      : '';
 
   return (
     <AnimatePresence>

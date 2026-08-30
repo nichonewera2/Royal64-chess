@@ -1,13 +1,13 @@
 {
-  "name": "Royal64 — Where Every Move Becomes History.",
+  "name": "Royal64 — Setiap Langkah Menjadi Sejarah.",
   "short_name": "Royal64",
-  "description": "A premium chess club for the modern age. Built by Nicholas.ofc.",
+  "description": "Klub catur premium untuk zaman modern. Dibuat oleh Nicholas.ofc.",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#241a12",
-  "theme_color": "#241a12",
+  "background_color": "#0f0a06",
+  "theme_color": "#0f0a06",
   "categories": ["games", "entertainment"],
   "icons": [
     {

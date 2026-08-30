@@ -43,7 +43,7 @@ export function InstallButton({ variant = 'default' }: { variant?: 'default' | '
   async function handleClick() {
     if (!deferredPrompt) {
       push(
-        'Install unavailable in this browser — try Chrome/Edge on desktop or Android, or "Add to Home Screen" on iOS Safari.',
+        'Pemasangan tidak tersedia di browser ini — coba Chrome/Edge di desktop atau Android, atau gunakan "Tambahkan ke Layar Utama" di iOS Safari.',
         'info'
       );
       return;
@@ -52,7 +52,7 @@ export function InstallButton({ variant = 'default' }: { variant?: 'default' | '
     const choice = await deferredPrompt.userChoice;
     localStorage.setItem(DISMISS_KEY, '1');
     if (choice.outcome === 'accepted') {
-      push('Installing Royal64…', 'success');
+      push('Memasang Royal64…', 'success');
     }
     setDeferredPrompt(null);
   }
@@ -60,7 +60,7 @@ export function InstallButton({ variant = 'default' }: { variant?: 'default' | '
   if (isInstalled) {
     return (
       <span className="flex items-center gap-2 text-emerald-400 text-sm">
-        <CheckCircle2 size={16} /> Installed
+        <CheckCircle2 size={16} /> Terpasang
       </span>
     );
   }
@@ -74,7 +74,7 @@ export function InstallButton({ variant = 'default' }: { variant?: 'default' | '
           : 'flex items-center gap-2 bg-gold-500 hover:bg-gold-400 text-espresso-950 font-medium px-4 py-2.5 rounded-lg transition-colors'
       }
     >
-      <Download size={16} /> Install Royal64
+      <Download size={16} /> Pasang Royal64
     </button>
   );
 }

@@ -57,7 +57,7 @@ export function LocalGame() {
 
       <div className="flex flex-col lg:flex-row gap-6 items-start justify-center w-full">
         <ChessBoard />
-        <ChessSidebar whiteName={player1Name} blackName={player2Name} />
+        <ChessSidebar whiteName={player1Name} blackName={player2Name} controlsYouAre="both" />
       </div>
     </div>
   );

@@ -5,31 +5,37 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Deeper near-black brown base + saturated amber/copper accents —
+        // a punchier vintage-wood palette than the previous chocolate tone.
         espresso: {
-          950: '#1c130d',
-          900: '#241a12',
-          800: '#2f2117',
-          700: '#3c2c1f'
+          950: '#0f0a06',
+          900: '#170f09',
+          800: '#1f150d',
+          700: '#2a1d12'
         },
         walnut: {
-          800: '#4a3524',
-          700: '#5c4130',
-          600: '#6f4f3a'
+          800: '#3a2716',
+          700: '#4a331d',
+          600: '#5c4024'
         },
         mahogany: {
-          600: '#7a3b2e',
-          500: '#8f4636'
+          600: '#8a3820',
+          500: '#a3432a'
         },
         parchment: {
-          100: '#f3e9d6',
-          200: '#ece0c8',
-          300: '#e1d0ae'
+          100: '#f6e9cf',
+          200: '#efdcb8',
+          300: '#e3c691'
         },
-        ivory: '#f8f1e4',
+        ivory: '#faf1de',
         gold: {
-          400: '#c9a24b',
-          500: '#b3893a',
-          600: '#9a7530'
+          400: '#f0a83c',
+          500: '#e08e1f',
+          600: '#c2760f'
+        },
+        amber: {
+          400: '#ffb454',
+          500: '#f59b1f'
         },
         bronze: '#8a6a3f'
       },
@@ -45,9 +51,9 @@ const config: Config = {
       },
       backgroundImage: {
         'wood-dark':
-          'linear-gradient(135deg, #4a3524 0%, #3c2c1f 50%, #2f2117 100%)',
+          'linear-gradient(135deg, #3a2716 0%, #1f150d 50%, #0f0a06 100%)',
         'wood-light':
-          'linear-gradient(135deg, #ece0c8 0%, #e1d0ae 50%, #d8c194 100%)'
+          'linear-gradient(135deg, #efdcb8 0%, #e3c691 50%, #d4ac6e 100%)'
       },
       keyframes: {
         'piece-lift': {

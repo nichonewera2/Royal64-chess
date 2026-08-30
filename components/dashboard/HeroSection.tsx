@@ -33,7 +33,7 @@ export function HeroSection() {
           transition={{ delay: 0.2 }}
           className="font-display italic text-xl sm:text-2xl text-gold-400"
         >
-          Where Every Move Becomes History.
+          Setiap Langkah Menjadi Sejarah.
         </motion.p>
 
         <motion.p
@@ -42,9 +42,9 @@ export function HeroSection() {
           transition={{ delay: 0.3 }}
           className="text-parchment-200/80 max-w-xl"
         >
-          A chess club for the modern age. Play a friend across the room or across
-          the world, challenge the Royal64 AI, and step into a board built with
-          the weight and warmth of old-world wood.
+          Klub catur untuk zaman modern. Main lawan teman satu ruangan atau dari
+          belahan dunia lain, tantang Royal64 AI, dan rasakan papan yang dibangun
+          dengan kehangatan kayu tua klasik.
         </motion.p>
 
         <motion.div
@@ -57,13 +57,13 @@ export function HeroSection() {
             href="/game"
             className="bg-gold-500 hover:bg-gold-400 text-espresso-950 font-medium px-6 py-3 rounded-lg transition-colors"
           >
-            Enter The Game
+            Masuk ke Permainan
           </Link>
           <Link
             href="/game?mode=computer"
             className="flex items-center gap-2 border border-parchment-200/30 hover:border-gold-500/60 text-parchment-100 px-6 py-3 rounded-lg transition-colors"
           >
-            <Cpu size={16} /> Play Against Computer
+            <Cpu size={16} /> Lawan Komputer
           </Link>
         </motion.div>
 

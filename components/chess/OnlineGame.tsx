@@ -12,6 +12,7 @@ import {
 import { ChessBoard } from './ChessBoard';
 import { ChessSidebar } from './ChessSidebar';
 import { ChatBox } from './ChatBox';
+import { HostLobby, JoinerLobby } from './RoomLobby';
 import { WifiOff, Wifi, Loader2, Eye } from 'lucide-react';
 
 export type SeatRole = 'w' | 'b' | 'spectator';
@@ -25,8 +26,8 @@ interface OnlineGameProps {
 }
 
 const STATUS_COPY: Record<RealtimeStatus, { label: string; tone: string }> = {
-  connected: { label: 'Live — connected', tone: 'text-emerald-400' },
-  connecting: { label: 'Connecting…', tone: 'text-gold-400' },
+  connected: { label: 'Langsung — Terhubung', tone: 'text-emerald-400' },
+  connecting: { label: 'Menghubungkan…', tone: 'text-gold-400' },
   disconnected: { label: 'Terputus — mencoba lagi', tone: 'text-red-400' },
   unconfigured: {
     label: 'Realtime belum dikonfigurasi — mode pratinjau lokal',
@@ -38,12 +39,26 @@ const DEFAULT_WHITE_NAME = 'Menunggu Putih…';
 const DEFAULT_BLACK_NAME = 'Menunggu Hitam…';
 
 export function OnlineGame({ gameId, playerId, playerName, role }: OnlineGameProps) {
-  const { resetGame, playMove, engine } = useGameStore();
+  const { resetGame, playMove, engine, resign, offerDraw, respondDraw } = useGameStore();
   const [status, setStatus] = useState<RealtimeStatus>('connecting');
   const [whiteName, setWhiteName] = useState(role === 'w' ? playerName : DEFAULT_WHITE_NAME);
   const [blackName, setBlackName] = useState(role === 'b' ? playerName : DEFAULT_BLACK_NAME);
   const provider = getRealtimeProvider(gameId);
   const repliedToPeers = useRef<Set<string>>(new Set());
+
+  // --- Waiting-room lobby state ---
+  // Spectators skip the lobby entirely and just watch whatever's on the
+  // board. Players (host = 'w', joiner = 'b') start in the lobby and only
+  // enter the actual game once the host explicitly approves a join
+  // request — both screens flip to the board at the moment that approval
+  // broadcast lands, so they transition together rather than the joiner
+  // guessing when they've been let in.
+  const [gameStarted, setGameStarted] = useState(role === 'spectator');
+  const [pendingRequests, setPendingRequests] = useState<
+    Array<{ playerId: string; name: string }>
+  >([]);
+  const [joinStatus, setJoinStatus] = useState<'waiting' | 'declined'>('waiting');
+  const hasSentJoinRequest = useRef(false);
 
   useEffect(() => {
     resetGame('online');
@@ -56,6 +71,12 @@ export function OnlineGame({ gameId, playerId, playerName, role }: OnlineGamePro
       // reconnect after a drop, so a returning opponent sees our name again.
       if (s === 'connected' && role !== 'spectator') {
         provider.sendIdentity({ playerId, name: playerName, role });
+      }
+      // The joiner asks to enter the room as soon as they're connected.
+      // Guarded so a later reconnect doesn't spam duplicate requests.
+      if (s === 'connected' && role === 'b' && !hasSentJoinRequest.current) {
+        hasSentJoinRequest.current = true;
+        provider.send('join-request', { playerId, name: playerName });
       }
     });
 
@@ -80,6 +101,43 @@ export function OnlineGame({ gameId, playerId, playerName, role }: OnlineGamePro
       playMove(payload.from as Square, payload.to as Square, payload.promotion as any);
     });
 
+    // Resign/draw are applied locally by ChessControls for whoever acted;
+    // these listeners apply the SAME action on the other player's screen,
+    // since each browser holds its own independent game store.
+    const unsubscribeResign = provider.on<{ by: 'w' | 'b' }>('resign', (payload) => {
+      resign(payload.by);
+    });
+    const unsubscribeDrawOffer = provider.on<{ by: 'w' | 'b' }>('draw-offer', (payload) => {
+      offerDraw(payload.by);
+    });
+    const unsubscribeDrawResponse = provider.on<{ accepted: boolean }>('draw-response', (payload) => {
+      respondDraw(payload.accepted);
+    });
+
+    // --- Lobby event wiring ---
+    // Host: collect join requests into a queue for the approval UI.
+    const unsubscribeJoinRequest = provider.on<{ playerId: string; name: string }>(
+      'join-request',
+      (payload) => {
+        if (role !== 'w') return;
+        setPendingRequests((prev) =>
+          prev.some((r) => r.playerId === payload.playerId) ? prev : [...prev, payload]
+        );
+      }
+    );
+    // Joiner: the host approved us — flip to the board at the same moment
+    // the host does, since both sides react to this same broadcast.
+    const unsubscribeJoinApproved = provider.on<{ playerId: string }>('join-approved', (payload) => {
+      if (role === 'b' && payload.playerId === playerId) {
+        setGameStarted(true);
+      }
+    });
+    const unsubscribeJoinDeclined = provider.on<{ playerId: string }>('join-declined', (payload) => {
+      if (role === 'b' && payload.playerId === playerId) {
+        setJoinStatus('declined');
+      }
+    });
+
     provider.connect(gameId, playerId).then(() => {
       if (cancelled) return;
       setStatus(provider.status());
@@ -90,6 +148,12 @@ export function OnlineGame({ gameId, playerId, playerName, role }: OnlineGamePro
       unsubscribeStatus();
       unsubscribeIdentity();
       unsubscribeMove();
+      unsubscribeResign();
+      unsubscribeDrawOffer();
+      unsubscribeDrawResponse();
+      unsubscribeJoinRequest();
+      unsubscribeJoinApproved();
+      unsubscribeJoinDeclined();
       provider.disconnect();
       releaseRealtimeProvider(gameId);
     };
@@ -107,11 +171,63 @@ export function OnlineGame({ gameId, playerId, playerName, role }: OnlineGamePro
     });
   }
 
+  function handleResignBroadcast(by: 'w' | 'b') {
+    provider.send('resign', { by });
+  }
+
+  function handleDrawOfferBroadcast(by: 'w' | 'b') {
+    provider.send('draw-offer', { by });
+  }
+
+  function handleDrawResponseBroadcast(accepted: boolean) {
+    provider.send('draw-response', { accepted });
+  }
+
+  function handleAcceptJoin(joinerId: string) {
+    const request = pendingRequests.find((r) => r.playerId === joinerId);
+    if (request) setBlackName(request.name);
+    setPendingRequests((prev) => prev.filter((r) => r.playerId !== joinerId));
+    provider.send('join-approved', { playerId: joinerId });
+    // The host flips to the board immediately on their own click; the
+    // joiner flips the moment the 'join-approved' broadcast above arrives
+    // on their screen — both happen within the same realtime round-trip.
+    setGameStarted(true);
+  }
+
+  function handleDeclineJoin(joinerId: string) {
+    setPendingRequests((prev) => prev.filter((r) => r.playerId !== joinerId));
+    provider.send('join-declined', { playerId: joinerId });
+  }
+
   const isPlayer = role === 'w' || role === 'b';
   const isMyTurn = isPlayer && engine.turn === role;
   const isConnected = status === 'connected';
   const copy = STATUS_COPY[status];
   const orientation = role === 'b' ? 'black' : 'white';
+
+  if (!gameStarted) {
+    return (
+      <div className="flex flex-col gap-4 items-center">
+        <div className={`flex items-center gap-2 text-sm ${copy.tone}`}>
+          {status === 'connected' && <Wifi size={16} />}
+          {status === 'connecting' && <Loader2 size={16} className="animate-spin" />}
+          {(status === 'disconnected' || status === 'unconfigured') && <WifiOff size={16} />}
+          {copy.label}
+        </div>
+
+        {role === 'w' ? (
+          <HostLobby
+            gameId={gameId}
+            pendingRequests={pendingRequests}
+            onAccept={handleAcceptJoin}
+            onDecline={handleDeclineJoin}
+          />
+        ) : (
+          <JoinerLobby status={joinStatus} hostSeenOnline={isConnected} />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4 items-center">
@@ -132,7 +248,16 @@ export function OnlineGame({ gameId, playerId, playerName, role }: OnlineGamePro
           onMoveCommitted={handleMoveCommitted}
           locked={role === 'spectator' || !isMyTurn || !isConnected}
         />
-        <ChessSidebar whiteName={whiteName} blackName={blackName} youAre={isPlayer ? role : null}>
+        <ChessSidebar
+          whiteName={whiteName}
+          blackName={blackName}
+          youAre={isPlayer ? role : null}
+          controlsYouAre={isPlayer ? role : 'both'}
+          showControls={isPlayer}
+          onResign={handleResignBroadcast}
+          onDrawOffer={handleDrawOfferBroadcast}
+          onDrawResponse={handleDrawResponseBroadcast}
+        >
           <ChatBox
             provider={provider}
             gameId={gameId}

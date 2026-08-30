@@ -1,22 +1,22 @@
 const CARDS = [
   {
-    title: 'The Opening Principles',
-    body: 'Control the center, develop knights before bishops, and castle early to keep your king safe.'
+    title: 'Prinsip Pembukaan',
+    body: 'Kuasai pusat papan, kembangkan kuda sebelum gajah, dan lakukan rokade lebih awal agar raja tetap aman.'
   },
   {
     title: 'En Passant',
-    body: "A pawn capturing rule that only applies the move immediately after an opponent's two-square pawn advance."
+    body: 'Aturan makan pion yang hanya berlaku tepat satu langkah setelah pion lawan maju dua petak.'
   },
   {
-    title: 'The Value of Tempo',
-    body: 'Every move that forces a reply while improving your position is worth more than it looks on the board.'
+    title: 'Nilai Tempo',
+    body: 'Setiap langkah yang memaksa lawan merespons sambil memperbaiki posisimu lebih berharga dari yang terlihat.'
   }
 ];
 
 export function ChessKnowledge() {
   return (
     <section className="max-w-5xl mx-auto px-6 py-10">
-      <h2 className="font-display text-2xl text-parchment-100 mb-4">Chess Knowledge</h2>
+      <h2 className="font-display text-2xl text-parchment-100 mb-4">Wawasan Catur</h2>
       <div className="grid sm:grid-cols-3 gap-4">
         {CARDS.map((card) => (
           <div

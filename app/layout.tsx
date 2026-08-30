@@ -17,9 +17,9 @@ const body = Inter({ subsets: ['latin'], variable: '--font-body' });
 const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
-  title: 'Royal64 — Where Every Move Becomes History.',
+  title: 'Royal64 — Setiap Langkah Menjadi Sejarah.',
   description:
-    'Royal64 is a premium chess platform: play a friend in real time, challenge the Royal64 AI, and step into a classic chocolate-toned digital chess club. Built by Nicholas.ofc.',
+    'Royal64 adalah platform catur premium: main lawan teman secara real-time, tantang Royal64 AI, dan rasakan klub catur digital bertema kayu klasik. Dibuat oleh Nicholas.ofc.',
   applicationName: 'Royal64',
   authors: [{ name: 'Nicholas.ofc' }],
   manifest: '/manifest.webmanifest',
@@ -28,14 +28,14 @@ export const metadata: Metadata = {
     apple: '/icons/icon-192.svg'
   },
   openGraph: {
-    title: 'Royal64 — Where Every Move Becomes History.',
-    description: 'A premium chess club for the modern age.',
+    title: 'Royal64 — Setiap Langkah Menjadi Sejarah.',
+    description: 'Klub catur premium untuk zaman modern.',
     type: 'website'
   }
 };
 
 export const viewport: Viewport = {
-  themeColor: '#241a12',
+  themeColor: '#0f0a06',
   width: 'device-width',
   initialScale: 1
 };

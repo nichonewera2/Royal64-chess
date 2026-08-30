@@ -40,7 +40,7 @@ const PAWN_TABLE = [
   0, 0, -10, -5, 5, 5, 10, 10, -20, -20, 10, 10, 5, 0, 0, 0, 0, 0, 0, 0, 0
 ];
 
-function evaluateBoard(chess: Chess): number {
+export function evaluateBoard(chess: Chess): number {
   const board = chess.board();
   let score = 0;
   for (let r = 0; r < 8; r++) {
@@ -102,6 +102,21 @@ function minimax(
  * feels more human and is honestly represented as "Beginner" rather
  * than claiming engine-grade strength.
  */
+/**
+ * Simple heuristic for whether the computer opponent accepts a draw offer:
+ * it declines only when it holds a clear material/positional edge (roughly
+ * more than a minor piece's worth), and accepts otherwise. This is an
+ * honest, transparent rule rather than a black box — a strong engine would
+ * weigh far more, but this reflects the same "material + a little
+ * position" evaluation the AI already plays by.
+ */
+export function shouldComputerAcceptDraw(fen: string, computerColor: 'w' | 'b'): boolean {
+  const chess = new Chess(fen);
+  const score = evaluateBoard(chess);
+  const computerAdvantage = computerColor === 'w' ? score : -score;
+  return computerAdvantage < 150;
+}
+
 export function pickComputerMove(fen: string, difficulty: Difficulty): Move | null {
   const chess = new Chess(fen);
   const depth = DEPTH_BY_DIFFICULTY[difficulty];

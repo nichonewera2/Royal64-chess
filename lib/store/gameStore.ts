@@ -22,12 +22,19 @@ interface GameStoreState {
   clock: ClockState;
   gameId: string | null;
   lastMoveMeta: { isCapture: boolean; isCastle: boolean; isPromotion: boolean } | null;
+  /** Which color currently has a pending outgoing draw offer awaiting a response. */
+  drawOfferedBy: 'w' | 'b' | null;
 
   selectSquare: (square: Square | null, legalTargets: Square[]) => void;
   playMove: (from: Square, to: Square, promotion?: 'q' | 'r' | 'b' | 'n') => boolean;
   resetGame: (mode: GameMode) => void;
   setGameId: (id: string | null) => void;
   tickClock: (color: 'w' | 'b', deltaMs: number) => void;
+  resign: (by: 'w' | 'b') => void;
+  offerDraw: (by: 'w' | 'b') => void;
+  respondDraw: (accepted: boolean) => void;
+  loadFen: (fen: string, mode: GameMode) => void;
+  undoLastMove: () => void;
 }
 
 const INITIAL_CLOCK_MS = 10 * 60 * 1000; // 10 minutes per side default
@@ -44,6 +51,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   clock: { whiteMs: INITIAL_CLOCK_MS, blackMs: INITIAL_CLOCK_MS, activeSince: Date.now() },
   gameId: null,
   lastMoveMeta: null,
+  drawOfferedBy: null,
 
   selectSquare: (square, legalTargets) => set({ selectedSquare: square, legalTargets }),
 
@@ -80,7 +88,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       legalTargets: [],
       moveList: [],
       clock: { whiteMs: INITIAL_CLOCK_MS, blackMs: INITIAL_CLOCK_MS, activeSince: Date.now() },
-      lastMoveMeta: null
+      lastMoveMeta: null,
+      drawOfferedBy: null
     });
   },
 
@@ -93,5 +102,54 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         whiteMs: color === 'w' ? Math.max(0, s.clock.whiteMs - deltaMs) : s.clock.whiteMs,
         blackMs: color === 'b' ? Math.max(0, s.clock.blackMs - deltaMs) : s.clock.blackMs
       }
-    }))
+    })),
+
+  resign: (by) =>
+    set({
+      status: 'resigned',
+      winner: by === 'w' ? 'b' : 'w',
+      drawOfferedBy: null
+    }),
+
+  offerDraw: (by) => set({ drawOfferedBy: by }),
+
+  respondDraw: (accepted) =>
+    set((s) =>
+      accepted
+        ? { status: 'draw_agreement', winner: null, drawOfferedBy: null }
+        : { drawOfferedBy: null }
+    ),
+
+  loadFen: (fen, mode) => {
+    const engine = new Royal64Engine(fen);
+    set({
+      engine,
+      fen: engine.fen,
+      mode,
+      status: 'in_progress',
+      winner: null,
+      selectedSquare: null,
+      legalTargets: [],
+      moveList: [],
+      clock: { whiteMs: INITIAL_CLOCK_MS, blackMs: INITIAL_CLOCK_MS, activeSince: Date.now() },
+      lastMoveMeta: null,
+      drawOfferedBy: null
+    });
+  },
+
+  undoLastMove: () => {
+    const { engine, moveList } = get();
+    const undone = engine.undo();
+    if (!undone) return;
+    const { status } = engine.computeStatus();
+    set({
+      fen: engine.fen,
+      status,
+      winner: null,
+      selectedSquare: null,
+      legalTargets: [],
+      moveList: moveList.slice(0, -1),
+      lastMoveMeta: null
+    });
+  }
 }));

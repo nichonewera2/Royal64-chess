@@ -8,9 +8,9 @@ type ThemeMode = 'light' | 'dark' | 'system';
 const STORAGE_KEY = 'royal64:theme';
 
 const OPTIONS: Array<{ key: ThemeMode; label: string; icon: React.ReactNode }> = [
-  { key: 'light', label: 'Light', icon: <Sun size={16} /> },
-  { key: 'dark', label: 'Dark', icon: <Moon size={16} /> },
-  { key: 'system', label: 'System', icon: <MonitorSmartphone size={16} /> }
+  { key: 'light', label: 'Terang', icon: <Sun size={16} /> },
+  { key: 'dark', label: 'Gelap', icon: <Moon size={16} /> },
+  { key: 'system', label: 'Sistem', icon: <MonitorSmartphone size={16} /> }
 ];
 
 export function ThemeSelector() {
