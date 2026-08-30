@@ -44,6 +44,8 @@ export interface RealtimeProvider {
   sendMove(payload: RoomMovePayload): Promise<boolean>;
   onMove(cb: (payload: RoomMovePayload) => void): () => void;
   onPresence(cb: (state: PresenceState) => void): () => void;
+  /** Notifies the caller whenever connection status changes after connect(). */
+  onStatusChange(cb: (status: RealtimeStatus) => void): () => void;
 }
 
 class OfflineProvider implements RealtimeProvider {
@@ -64,6 +66,9 @@ class OfflineProvider implements RealtimeProvider {
   onPresence() {
     return () => {};
   }
+  onStatusChange() {
+    return () => {};
+  }
 }
 
 /**
@@ -77,35 +82,80 @@ class SupabaseRealtimeProvider implements RealtimeProvider {
   private client: any = null;
   private channel: any = null;
   private currentStatus: RealtimeStatus = 'connecting';
+  private statusListeners: Set<(status: RealtimeStatus) => void> = new Set();
 
   status(): RealtimeStatus {
     return this.currentStatus;
   }
 
+  private setStatus(next: RealtimeStatus) {
+    if (this.currentStatus === next) return;
+    this.currentStatus = next;
+    this.statusListeners.forEach((cb) => cb(next));
+  }
+
+  onStatusChange(cb: (status: RealtimeStatus) => void) {
+    this.statusListeners.add(cb);
+    return () => this.statusListeners.delete(cb);
+  }
+
+  /**
+   * Resolves once the channel is actually SUBSCRIBED (or times out after 10s
+   * and marks the room disconnected). Previously this resolved immediately
+   * after calling `channel.subscribe()`, before the subscription callback
+   * ever fired — which left the UI stuck showing "Connecting..." forever
+   * even after a real connection succeeded, because nothing told the UI to
+   * check again. Now the promise itself tracks the real outcome, and
+   * onStatusChange (above) keeps the UI in sync for any status change that
+   * happens later too (e.g. a dropped connection).
+   */
   async connect(gameId: string, playerId: string) {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !key) {
-      this.currentStatus = 'unconfigured';
+      this.setStatus('unconfigured');
       return;
     }
+
     const { createClient } = await import('@supabase/supabase-js');
     this.client = createClient(url, key);
     this.channel = this.client.channel(`room:${gameId}`, {
       config: { presence: { key: playerId } }
     });
-    this.channel.subscribe((s: string) => {
-      this.currentStatus = s === 'SUBSCRIBED' ? 'connected' : 'connecting';
+
+    await new Promise<void>((resolve) => {
+      let settled = false;
+      const timeout = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        this.setStatus('disconnected');
+        resolve();
+      }, 10_000);
+
+      this.channel.subscribe((s: string) => {
+        if (s === 'SUBSCRIBED') {
+          this.setStatus('connected');
+        } else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') {
+          this.setStatus('disconnected');
+        } else {
+          this.setStatus('connecting');
+        }
+        if (!settled) {
+          settled = true;
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
     });
   }
 
   async disconnect() {
     if (this.channel) await this.client?.removeChannel(this.channel);
-    this.currentStatus = 'disconnected';
+    this.setStatus('disconnected');
   }
 
   async sendMove(payload: RoomMovePayload): Promise<boolean> {
-    if (!this.channel) return false;
+    if (!this.channel || this.currentStatus !== 'connected') return false;
     await this.channel.send({ type: 'broadcast', event: 'move', payload });
     return true;
   }

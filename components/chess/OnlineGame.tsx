@@ -31,15 +31,25 @@ export function OnlineGame({ gameId, playerId, playerColor }: OnlineGameProps) {
 
   useEffect(() => {
     resetGame('online');
-    provider.connect(gameId, playerId).then(() => setStatus(provider.status()));
+    let cancelled = false;
 
-    const unsubscribe = provider.onMove((payload) => {
+    const unsubscribeStatus = provider.onStatusChange((s) => {
+      if (!cancelled) setStatus(s);
+    });
+
+    provider.connect(gameId, playerId).then(() => {
+      if (!cancelled) setStatus(provider.status());
+    });
+
+    const unsubscribeMove = provider.onMove((payload) => {
       if (payload.movedBy === playerId) return;
       playMove(payload.from as Square, payload.to as Square, payload.promotion as any);
     });
 
     return () => {
-      unsubscribe();
+      cancelled = true;
+      unsubscribeStatus();
+      unsubscribeMove();
       provider.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -57,6 +67,7 @@ export function OnlineGame({ gameId, playerId, playerColor }: OnlineGameProps) {
   }
 
   const isMyTurn = engine.turn === playerColor;
+  const isConnected = status === 'connected';
   const copy = STATUS_COPY[status];
 
   return (
@@ -72,7 +83,7 @@ export function OnlineGame({ gameId, playerId, playerColor }: OnlineGameProps) {
         <ChessBoard
           orientation={playerColor === 'w' ? 'white' : 'black'}
           onMoveCommitted={handleMoveCommitted}
-          locked={!isMyTurn}
+          locked={!isMyTurn || !isConnected}
         />
         <ChessSidebar opponentLabel={`Opponent (${playerColor === 'w' ? 'Black' : 'White'})`} />
       </div>
