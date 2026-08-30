@@ -23,7 +23,7 @@ export default function GlobalError({
         </h1>
         <p className="text-parchment-300/70 mb-6">
           Something went wrong rendering this part of Royal64. Your game state
-          hasn't been lost — try again.
+          hasn&apos;t been lost — try again.
         </p>
         <button
           onClick={reset}

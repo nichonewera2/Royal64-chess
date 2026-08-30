@@ -6,11 +6,11 @@ export default function OfflinePage() {
     <main className="min-h-screen flex items-center justify-center bg-espresso-950 px-6 text-center">
       <div className="max-w-sm">
         <WifiOff className="mx-auto mb-4 text-gold-400" size={36} />
-        <h1 className="font-display text-2xl text-parchment-100 mb-2">You're offline</h1>
+        <h1 className="font-display text-2xl text-parchment-100 mb-2">You&apos;re offline</h1>
         <p className="text-parchment-300/70 mb-6">
-          Royal64 can't reach the network right now. Local modes still work —
+          Royal64 can&apos;t reach the network right now. Local modes still work —
           you can keep playing against the computer or pass-and-play locally.
-          Online multiplayer will reconnect automatically once you're back.
+          Online multiplayer will reconnect automatically once you&apos;re back.
         </p>
         <div className="flex flex-col gap-2">
           <Link

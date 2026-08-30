@@ -8,7 +8,7 @@ export default function NotFound() {
         <Crown className="mx-auto mb-4 text-gold-400" size={36} />
         <h1 className="font-display text-3xl text-parchment-100 mb-2">Off the board</h1>
         <p className="text-parchment-300/70 mb-6">
-          This square doesn't exist on Royal64's board. Let's get you back to the lobby.
+          This square doesn&apos;t exist on Royal64&apos;s board. Let&apos;s get you back to the lobby.
         </p>
         <Link
           href="/dashboard"

@@ -70,11 +70,11 @@ export function GamePortalClient({ initialMode }: { initialMode?: string }) {
           <ScanLine className="mx-auto mb-4 text-gold-400" size={32} />
           <p>
             Camera-based QR scanning requires camera permission this preview
-            environment can't grant. Use{' '}
+            environment can&apos;t grant. Use{' '}
             <button className="underline text-gold-400" onClick={() => setMode('join')}>
               Join with ID
             </button>{' '}
-            instead, or scan the code with your phone's native camera app — it
+            instead, or scan the code with your phone&apos;s native camera app — it
             will open the join link directly.
           </p>
         </div>
