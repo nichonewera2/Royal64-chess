@@ -43,7 +43,7 @@ export function GamePortalClient({ initialMode }: { initialMode?: string }) {
       push('That game could not be found.', 'error');
       return;
     }
-    router.push(`/game/${trimmed}`);
+    router.push(`/game/${trimmed}?seat=b`);
   }
 
   if (mode === 'computer') return <PortalShell title="Vs Computer"><ComputerGame /></PortalShell>;

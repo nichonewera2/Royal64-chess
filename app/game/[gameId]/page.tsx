@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { isValidGameId } from '@/lib/chess/gameId';
@@ -10,12 +10,17 @@ import { useToastStore } from '@/components/ui/Toast';
 
 export default function GameRoomPage() {
   const params = useParams<{ gameId: string }>();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const push = useToastStore((s) => s.push);
   const [playerId] = useState(() => `player-${Math.random().toString(36).slice(2, 9)}`);
 
   const gameId = decodeURIComponent(params.gameId ?? '').toUpperCase();
   const valid = isValidGameId(gameId);
+  // The share/QR link carries ?seat=b for the joining player; the creator's
+  // own browser opens the room without that param and defaults to White.
+  // See lib/chess/gameId.ts buildJoinUrl for where this is set.
+  const playerColor: 'w' | 'b' = searchParams.get('seat') === 'b' ? 'b' : 'w';
 
   useEffect(() => {
     if (!valid) {
@@ -52,7 +57,7 @@ export default function GameRoomPage() {
             Room <span className="text-gold-400 font-mono">{gameId}</span>
           </h1>
         </div>
-        <OnlineGame gameId={gameId} playerId={playerId} playerColor="w" />
+        <OnlineGame gameId={gameId} playerId={playerId} playerColor={playerColor} />
       </div>
     </main>
   );

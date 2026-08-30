@@ -23,5 +23,10 @@ export function isValidGameId(id: string): boolean {
 }
 
 export function buildJoinUrl(gameId: string, origin: string): string {
-  return `${origin}/game/${encodeURIComponent(gameId)}`;
+  // The shared/QR link explicitly seats the joining player as Black.
+  // The creator's own browser is sent to the same route without this
+  // param (see GamePortalClient), so it defaults to White. This keeps
+  // color assignment deterministic across two different devices without
+  // needing a backend to broker it.
+  return `${origin}/game/${encodeURIComponent(gameId)}?seat=b`;
 }
