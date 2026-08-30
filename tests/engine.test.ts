@@ -62,4 +62,11 @@ describe('Royal64Engine', () => {
     expect(isValidGameId(id)).toBe(true);
     expect(id).toMatch(/^R64-[A-Z2-9]{5}$/);
   });
+
+  it('builds a join URL that seats the joiner as Black', async () => {
+    const { generateGameId, buildJoinUrl } = await import('@/lib/chess/gameId');
+    const id = generateGameId();
+    const url = buildJoinUrl(id, 'https://royal64.app');
+    expect(url).toBe(`https://royal64.app/game/${id}?seat=b`);
+  });
 });

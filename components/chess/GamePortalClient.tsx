@@ -3,19 +3,20 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Cpu, Users, LogIn, Plus, ScanLine, Puzzle, ArrowLeft } from 'lucide-react';
+import { Cpu, Users, LogIn, Plus, ScanLine, Puzzle, ArrowLeft, Eye } from 'lucide-react';
 import { ComputerGame } from './ComputerGame';
 import { LocalGame } from './LocalGame';
 import { RoomShareModal } from './RoomShareModal';
 import { generateGameId, isValidGameId } from '@/lib/chess/gameId';
 import { useToastStore } from '@/components/ui/Toast';
 
-type PortalMode = 'menu' | 'computer' | 'local' | 'create' | 'join' | 'scan' | 'puzzle';
+type PortalMode = 'menu' | 'computer' | 'local' | 'create' | 'join' | 'scan' | 'puzzle' | 'watch';
 
 const MODE_CARDS: Array<{ mode: PortalMode; icon: React.ReactNode; title: string; group: string }> = [
   { mode: 'create', icon: <Plus size={20} />, title: 'Create Game', group: 'Play Online' },
   { mode: 'join', icon: <LogIn size={20} />, title: 'Join Game', group: 'Play Online' },
   { mode: 'scan', icon: <ScanLine size={20} />, title: 'Scan QR', group: 'Play Online' },
+  { mode: 'watch', icon: <Eye size={20} />, title: 'Tonton Pertandingan', group: 'Play Online' },
   { mode: 'computer', icon: <Cpu size={20} />, title: 'Play vs Computer', group: 'Play Offline' },
   { mode: 'local', icon: <Users size={20} />, title: 'Local 2 Player', group: 'Play Offline' },
   { mode: 'puzzle', icon: <Puzzle size={20} />, title: 'Puzzle Mode', group: 'Practice' }
@@ -29,6 +30,7 @@ export function GamePortalClient({ initialMode }: { initialMode?: string }) {
   );
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [joinInput, setJoinInput] = useState('');
+  const [watchInput, setWatchInput] = useState('');
   const router = useRouter();
   const push = useToastStore((s) => s.push);
 
@@ -44,6 +46,15 @@ export function GamePortalClient({ initialMode }: { initialMode?: string }) {
       return;
     }
     router.push(`/game/${trimmed}?seat=b`);
+  }
+
+  function handleWatch() {
+    const trimmed = watchInput.trim().toUpperCase();
+    if (!isValidGameId(trimmed)) {
+      push('That game could not be found.', 'error');
+      return;
+    }
+    router.push(`/game/${trimmed}?watch=1`);
   }
 
   if (mode === 'computer') return <PortalShell title="Vs Computer"><ComputerGame /></PortalShell>;
@@ -120,6 +131,35 @@ export function GamePortalClient({ initialMode }: { initialMode?: string }) {
             className="bg-gold-500 hover:bg-gold-400 text-espresso-950 font-medium px-4 py-3 rounded-lg"
           >
             Join Game
+          </button>
+        </div>
+      </PortalShell>
+    );
+  }
+
+  if (mode === 'watch') {
+    return (
+      <PortalShell title="Tonton Pertandingan">
+        <div className="max-w-sm mx-auto py-16 flex flex-col gap-3">
+          <div className="flex items-center gap-2 text-parchment-300/70 text-sm mb-1">
+            <Eye size={16} className="text-gold-400" />
+            Masukkan Game ID untuk menonton — tanpa ikut bermain.
+          </div>
+          <label className="text-sm text-parchment-300/70" htmlFor="watchId">
+            Game ID
+          </label>
+          <input
+            id="watchId"
+            value={watchInput}
+            onChange={(e) => setWatchInput(e.target.value)}
+            placeholder="R64-X7K9P"
+            className="bg-espresso-900 border border-walnut-700 focus:border-gold-500 rounded-lg px-4 py-3 font-mono tracking-widest text-parchment-100 outline-none"
+          />
+          <button
+            onClick={handleWatch}
+            className="bg-gold-500 hover:bg-gold-400 text-espresso-950 font-medium px-4 py-3 rounded-lg"
+          >
+            Tonton Sekarang
           </button>
         </div>
       </PortalShell>

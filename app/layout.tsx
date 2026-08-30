@@ -2,7 +2,9 @@ import type { Metadata, Viewport } from 'next';
 import { Playfair_Display, Inter, JetBrains_Mono } from 'next/font/google';
 import { ToastViewport } from '@/components/ui/Toast';
 import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister';
+import { NamePromptModal } from '@/components/ui/NamePromptModal';
 import './globals.css';
+import './fonts.css';
 
 const display = Playfair_Display({
   subsets: ['latin'],
@@ -45,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <ToastViewport />
         <ServiceWorkerRegister />
+        <NamePromptModal />
       </body>
     </html>
   );

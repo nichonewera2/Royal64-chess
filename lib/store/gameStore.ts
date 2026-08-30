@@ -21,6 +21,7 @@ interface GameStoreState {
   moveList: string[];
   clock: ClockState;
   gameId: string | null;
+  lastMoveMeta: { isCapture: boolean; isCastle: boolean; isPromotion: boolean } | null;
 
   selectSquare: (square: Square | null, legalTargets: Square[]) => void;
   playMove: (from: Square, to: Square, promotion?: 'q' | 'r' | 'b' | 'n') => boolean;
@@ -42,6 +43,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   moveList: [],
   clock: { whiteMs: INITIAL_CLOCK_MS, blackMs: INITIAL_CLOCK_MS, activeSince: Date.now() },
   gameId: null,
+  lastMoveMeta: null,
 
   selectSquare: (square, legalTargets) => set({ selectedSquare: square, legalTargets }),
 
@@ -56,7 +58,12 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       winner: result.winner,
       selectedSquare: null,
       legalTargets: [],
-      moveList: [...moveList, result.move.san]
+      moveList: [...moveList, result.move.san],
+      lastMoveMeta: {
+        isCapture: result.isCapture,
+        isCastle: result.isCastle,
+        isPromotion: result.isPromotion
+      }
     });
     return true;
   },
@@ -72,7 +79,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       selectedSquare: null,
       legalTargets: [],
       moveList: [],
-      clock: { whiteMs: INITIAL_CLOCK_MS, blackMs: INITIAL_CLOCK_MS, activeSince: Date.now() }
+      clock: { whiteMs: INITIAL_CLOCK_MS, blackMs: INITIAL_CLOCK_MS, activeSince: Date.now() },
+      lastMoveMeta: null
     });
   },
 

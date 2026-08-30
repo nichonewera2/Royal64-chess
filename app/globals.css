@@ -13,6 +13,12 @@ html[data-theme='light'] {
 body {
   @apply bg-espresso-950 text-parchment-100 antialiased;
   font-feature-settings: 'kern';
+  background-image:
+    linear-gradient(rgba(28, 19, 13, 0.88), rgba(28, 19, 13, 0.93)),
+    url('/textures/wood-grain.svg');
+  background-size: cover, 480px 480px;
+  background-attachment: fixed, fixed;
+  background-repeat: no-repeat, repeat;
 }
 
 ::selection {

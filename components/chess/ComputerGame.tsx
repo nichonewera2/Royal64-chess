@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { Square } from 'chess.js';
 import { useGameStore } from '@/lib/store/gameStore';
+import { usePlayerStore } from '@/lib/store/playerStore';
 import { getComputerOpponent } from '@/lib/chess/computer';
 import type { Difficulty } from '@/lib/chess/ai';
 import { ChessBoard } from './ChessBoard';
@@ -12,11 +13,13 @@ const DIFFICULTIES: Difficulty[] = ['beginner', 'club', 'expert'];
 
 export function ComputerGame() {
   const { fen, engine, status, resetGame, playMove } = useGameStore();
+  const { name, hydrated, hydrate } = usePlayerStore();
   const [difficulty, setDifficulty] = useState<Difficulty>('club');
   const [thinking, setThinking] = useState(false);
   const opponent = getComputerOpponent();
 
   useEffect(() => {
+    hydrate();
     resetGame('computer');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -37,6 +40,8 @@ export function ComputerGame() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fen]);
+
+  const playerName = hydrated ? name ?? 'Kamu' : 'Kamu';
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 items-start justify-center">
@@ -63,7 +68,11 @@ export function ComputerGame() {
           </p>
         )}
       </div>
-      <ChessSidebar opponentLabel={`${opponent.label} · ${difficulty}`} />
+      <ChessSidebar
+        whiteName={playerName}
+        blackName={`${opponent.label} · ${difficulty}`}
+        youAre="w"
+      />
     </div>
   );
 }

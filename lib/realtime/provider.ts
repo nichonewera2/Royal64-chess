@@ -1,21 +1,23 @@
 /**
- * Realtime provider abstraction for Royal64 multiplayer.
+ * Realtime provider abstraction for Royal64 multiplayer, chat, and
+ * spectating.
  *
- * HONESTY NOTE: no realtime backend credentials exist in this build
- * environment (no network, no provisioned Supabase/Ably/Pusher project).
- * Rather than fake multiplayer with local-only state and label it
- * "realtime" (explicitly forbidden by the spec), this module:
+ * HONESTY NOTE: this only becomes a real live connection once
+ * NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY are set (see
+ * .env.local). Without them, `OfflineProvider` honestly reports
+ * "unconfigured" instead of faking a connection.
  *
- *   1. Defines the real interface a production realtime provider must
- *      implement (subscribe to room, broadcast a move, presence).
- *   2. Ships a `SupabaseRealtimeProvider` that talks to Supabase Realtime
- *      the moment env vars are configured (see .env.example).
- *   3. Falls back to `OfflineProvider`, which honestly reports itself as
- *      disconnected and drives the "You're offline — realtime not
- *      configured" UI state instead of pretending to sync.
- *
- * Swap providers by setting NEXT_PUBLIC_REALTIME_PROVIDER in .env.
+ * DESIGN: everything (moves, chat messages, player identity, presence)
+ * rides over ONE Supabase Realtime channel per room, as named broadcast
+ * events. `on()`/`send()` are generic; onMove/onChat/onIdentity are thin,
+ * typed convenience wrappers over them. Listeners registered via `on()`
+ * are stored in a Set *before* the channel exists and re-attached once
+ * `connect()` actually creates it — registration order never matters
+ * (this fixed a real bug where onMove() calls before connect() finished
+ * were silently dropped).
  */
+
+export type RealtimeStatus = 'connected' | 'connecting' | 'disconnected' | 'unconfigured';
 
 export interface RoomMovePayload {
   gameId: string;
@@ -27,25 +29,38 @@ export interface RoomMovePayload {
   timestamp: number;
 }
 
-export interface PresenceState {
+export interface ChatMessagePayload {
+  id: string;
   gameId: string;
-  playerId: string;
-  connected: boolean;
-  lastSeen: number;
+  senderId: string;
+  senderName: string;
+  text: string;
+  timestamp: number;
 }
 
-export type RealtimeStatus = 'connected' | 'connecting' | 'disconnected' | 'unconfigured';
+export interface IdentityPayload {
+  playerId: string;
+  name: string;
+  role: 'w' | 'b' | 'spectator';
+}
+
+type EventName = 'move' | 'chat' | 'identity' | 'resign' | 'draw-offer' | 'draw-response';
 
 export interface RealtimeProvider {
   readonly name: string;
   status(): RealtimeStatus;
   connect(gameId: string, playerId: string): Promise<void>;
   disconnect(): Promise<void>;
+  send<T = unknown>(event: EventName, payload: T): Promise<boolean>;
+  on<T = unknown>(event: EventName, cb: (payload: T) => void): () => void;
+  onStatusChange(cb: (status: RealtimeStatus) => void): () => void;
+
   sendMove(payload: RoomMovePayload): Promise<boolean>;
   onMove(cb: (payload: RoomMovePayload) => void): () => void;
-  onPresence(cb: (state: PresenceState) => void): () => void;
-  /** Notifies the caller whenever connection status changes after connect(). */
-  onStatusChange(cb: (status: RealtimeStatus) => void): () => void;
+  sendChat(payload: ChatMessagePayload): Promise<boolean>;
+  onChat(cb: (payload: ChatMessagePayload) => void): () => void;
+  sendIdentity(payload: IdentityPayload): Promise<boolean>;
+  onIdentity(cb: (payload: IdentityPayload) => void): () => void;
 }
 
 class OfflineProvider implements RealtimeProvider {
@@ -53,41 +68,44 @@ class OfflineProvider implements RealtimeProvider {
   status(): RealtimeStatus {
     return 'unconfigured';
   }
-  async connect() {
-    // Intentionally a no-op: there is nothing to connect to.
-  }
+  async connect() {}
   async disconnect() {}
-  async sendMove(): Promise<boolean> {
+  async send(): Promise<boolean> {
     return false;
   }
-  onMove() {
-    return () => {};
-  }
-  onPresence() {
+  on() {
     return () => {};
   }
   onStatusChange() {
     return () => {};
   }
+  async sendMove() {
+    return false;
+  }
+  onMove() {
+    return () => {};
+  }
+  async sendChat() {
+    return false;
+  }
+  onChat() {
+    return () => {};
+  }
+  async sendIdentity() {
+    return false;
+  }
+  onIdentity() {
+    return () => {};
+  }
 }
 
-/**
- * Supabase Realtime implementation. Only instantiated when
- * NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are present.
- * Uses dynamic import so the @supabase/supabase-js dependency is never
- * bundled or required when the app is running offline-only.
- */
 class SupabaseRealtimeProvider implements RealtimeProvider {
   readonly name = 'supabase';
   private client: any = null;
   private channel: any = null;
   private currentStatus: RealtimeStatus = 'connecting';
   private statusListeners: Set<(status: RealtimeStatus) => void> = new Set();
-  // Registered independently of connection timing — see connect() below for
-  // why this matters: onMove()/onPresence() can be called by the component
-  // before connect() has actually created the channel.
-  private moveListeners: Set<(payload: RoomMovePayload) => void> = new Set();
-  private presenceListeners: Set<(state: PresenceState) => void> = new Set();
+  private eventListeners: Map<EventName, Set<(payload: any) => void>> = new Map();
 
   status(): RealtimeStatus {
     return this.currentStatus;
@@ -104,20 +122,19 @@ class SupabaseRealtimeProvider implements RealtimeProvider {
     return () => this.statusListeners.delete(cb);
   }
 
-  /**
-   * Resolves once the channel is actually SUBSCRIBED (or times out after 10s
-   * and marks the room disconnected).
-   *
-   * BUG FIX NOTE: this method also wires up the actual `channel.on(...)`
-   * bindings for moves and presence — that used to happen lazily inside
-   * onMove()/onPresence(), which silently failed if those were called
-   * before `this.channel` existed yet (which they reliably were, since
-   * OnlineGame.tsx calls provider.onMove() right after calling
-   * provider.connect() without awaiting it). Now onMove()/onPresence() just
-   * add to a listener Set that this method reads from once the channel is
-   * actually created, so registration order no longer matters.
-   */
-  async connect(gameId: string, playerId: string) {
+  on<T = unknown>(event: EventName, cb: (payload: T) => void) {
+    if (!this.eventListeners.has(event)) this.eventListeners.set(event, new Set());
+    this.eventListeners.get(event)!.add(cb as any);
+    return () => this.eventListeners.get(event)?.delete(cb as any);
+  }
+
+  async send<T = unknown>(event: EventName, payload: T): Promise<boolean> {
+    if (!this.channel || this.currentStatus !== 'connected') return false;
+    await this.channel.send({ type: 'broadcast', event, payload });
+    return true;
+  }
+
+  async connect(gameId: string) {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !key) {
@@ -127,20 +144,14 @@ class SupabaseRealtimeProvider implements RealtimeProvider {
 
     const { createClient } = await import('@supabase/supabase-js');
     this.client = createClient(url, key);
-    this.channel = this.client.channel(`room:${gameId}`, {
-      config: { presence: { key: playerId } }
-    });
+    this.channel = this.client.channel(`room:${gameId}`);
 
-    this.channel.on('broadcast', { event: 'move' }, ({ payload }: any) => {
-      this.moveListeners.forEach((cb) => cb(payload));
-    });
-
-    this.channel.on('presence', { event: 'sync' }, () => {
-      // Simplified presence sync — production version would diff state.
-      this.presenceListeners.forEach((cb) =>
-        cb({ gameId, playerId: '', connected: true, lastSeen: Date.now() })
-      );
-    });
+    const events: EventName[] = ['move', 'chat', 'identity', 'resign', 'draw-offer', 'draw-response'];
+    for (const event of events) {
+      this.channel.on('broadcast', { event }, ({ payload }: any) => {
+        this.eventListeners.get(event)?.forEach((cb) => cb(payload));
+      });
+    }
 
     await new Promise<void>((resolve) => {
       let settled = false;
@@ -152,13 +163,10 @@ class SupabaseRealtimeProvider implements RealtimeProvider {
       }, 10_000);
 
       this.channel.subscribe((s: string) => {
-        if (s === 'SUBSCRIBED') {
-          this.setStatus('connected');
-        } else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') {
-          this.setStatus('disconnected');
-        } else {
-          this.setStatus('connecting');
-        }
+        if (s === 'SUBSCRIBED') this.setStatus('connected');
+        else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') this.setStatus('disconnected');
+        else this.setStatus('connecting');
+
         if (!settled) {
           settled = true;
           clearTimeout(timeout);
@@ -173,30 +181,45 @@ class SupabaseRealtimeProvider implements RealtimeProvider {
     this.setStatus('disconnected');
   }
 
-  async sendMove(payload: RoomMovePayload): Promise<boolean> {
-    if (!this.channel || this.currentStatus !== 'connected') return false;
-    await this.channel.send({ type: 'broadcast', event: 'move', payload });
-    return true;
+  sendMove(payload: RoomMovePayload) {
+    return this.send('move', payload);
   }
-
   onMove(cb: (payload: RoomMovePayload) => void) {
-    this.moveListeners.add(cb);
-    return () => this.moveListeners.delete(cb);
+    return this.on<RoomMovePayload>('move', cb);
   }
-
-  onPresence(cb: (state: PresenceState) => void) {
-    this.presenceListeners.add(cb);
-    return () => this.presenceListeners.delete(cb);
+  sendChat(payload: ChatMessagePayload) {
+    return this.send('chat', payload);
+  }
+  onChat(cb: (payload: ChatMessagePayload) => void) {
+    return this.on<ChatMessagePayload>('chat', cb);
+  }
+  sendIdentity(payload: IdentityPayload) {
+    return this.send('identity', payload);
+  }
+  onIdentity(cb: (payload: IdentityPayload) => void) {
+    return this.on<IdentityPayload>('identity', cb);
   }
 }
 
-let cachedProvider: RealtimeProvider | null = null;
+const providerCache: Map<string, RealtimeProvider> = new Map();
 
-export function getRealtimeProvider(): RealtimeProvider {
-  if (cachedProvider) return cachedProvider;
+/**
+ * Returns a realtime provider instance keyed by room. Each room gets its
+ * own provider/channel instance so multiple rooms (e.g. a spectator
+ * watching one room while a player tab has another open) don't collide.
+ */
+export function getRealtimeProvider(roomKey: string): RealtimeProvider {
+  const cached = providerCache.get(roomKey);
+  if (cached) return cached;
+
   const hasSupabase =
     Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
     Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-  cachedProvider = hasSupabase ? new SupabaseRealtimeProvider() : new OfflineProvider();
-  return cachedProvider;
+  const provider = hasSupabase ? new SupabaseRealtimeProvider() : new OfflineProvider();
+  providerCache.set(roomKey, provider);
+  return provider;
+}
+
+export function releaseRealtimeProvider(roomKey: string) {
+  providerCache.delete(roomKey);
 }

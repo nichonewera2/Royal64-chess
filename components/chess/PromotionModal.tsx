@@ -37,7 +37,7 @@ export function PromotionModal({ color, onSelect, onClose }: PromotionModalProps
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-walnut-800 border border-gold-500/40 rounded-xl p-6 shadow-panel"
+          className="bg-walnut-800 bg-[url('/textures/wood-grain.svg')] bg-cover border border-gold-500/40 rounded-xl p-6 shadow-panel"
         >
           <p className="font-display text-parchment-100 text-center mb-4 text-lg">
             Promote your pawn

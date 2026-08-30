@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useGameStore } from '@/lib/store/gameStore';
+import { PlayerNameplate } from './PlayerNameplate';
 import clsx from 'clsx';
 
 function formatMs(ms: number): string {
@@ -13,10 +14,11 @@ function formatMs(ms: number): string {
 
 interface ChessClockProps {
   color: 'w' | 'b';
-  label: string;
+  name: string;
+  isYou?: boolean;
 }
 
-export function ChessClock({ color, label }: ChessClockProps) {
+export function ChessClock({ color, name, isYou }: ChessClockProps) {
   const { clock, tickClock, engine, status } = useGameStore();
   const lastTick = useRef<number>(Date.now());
   const isActive = engine.turn === color && status !== 'checkmate' && status !== 'stalemate';
@@ -39,15 +41,20 @@ export function ChessClock({ color, label }: ChessClockProps) {
   return (
     <div
       className={clsx(
-        'flex items-center justify-between px-4 py-2 rounded-lg font-mono text-xl tabular-nums border',
-        isActive
-          ? 'bg-mahogany-600/90 border-gold-500 text-ivory'
-          : 'bg-espresso-800/60 border-walnut-700 text-parchment-300',
-        isLow && 'text-red-300 border-red-400 animate-pulse'
+        "flex items-center justify-between px-4 py-2.5 rounded-lg border bg-[url('/textures/wood-grain.svg')] bg-cover",
+        isActive ? 'border-gold-500 shadow-[0_0_0_1px_rgba(201,162,75,0.4)]' : 'border-walnut-700/60'
       )}
     >
-      <span className="font-body text-xs uppercase tracking-wide opacity-80">{label}</span>
-      <span>{formatMs(ms)}</span>
+      <PlayerNameplate name={name} color={color} isActive={isActive} isYou={isYou} />
+      <span
+        className={clsx(
+          'font-mono text-xl tabular-nums',
+          isActive ? 'text-ivory' : 'text-parchment-300/70',
+          isLow && 'text-red-300 animate-pulse'
+        )}
+      >
+        {formatMs(ms)}
+      </span>
     </div>
   );
 }

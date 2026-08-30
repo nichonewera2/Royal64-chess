@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Cpu, Plus, LogIn, ScanLine, Puzzle, Users } from 'lucide-react';
+import { Cpu, Plus, LogIn, ScanLine, Puzzle, Users, Eye } from 'lucide-react';
 
 interface ActionCardProps {
   href: string;
@@ -14,7 +14,7 @@ function ActionCard({ href, icon, title, description }: ActionCardProps) {
   return (
     <Link
       href={href}
-      className="group flex flex-col gap-2 bg-espresso-800/70 border border-walnut-700 hover:border-gold-500/60 rounded-xl p-5 transition-colors"
+      className="group flex flex-col gap-2 bg-espresso-800/70 bg-[url('/textures/wood-grain.svg')] bg-cover bg-blend-multiply border border-walnut-700 hover:border-gold-500/60 rounded-xl p-5 transition-colors"
     >
       <span className="w-10 h-10 rounded-lg bg-mahogany-600/30 text-gold-400 flex items-center justify-center group-hover:bg-mahogany-600/60 transition-colors">
         {icon}
@@ -65,10 +65,10 @@ export function QuickActions() {
           description="Type in a friend's Game ID (e.g. R64-X7K9P)."
         />
         <ActionCard
-          href="/game?mode=scan"
-          icon={<ScanLine size={20} />}
-          title="Scan QR"
-          description="Use your camera to scan a room's QR invite."
+          href="/game?mode=watch"
+          icon={<Eye size={20} />}
+          title="Tonton Pertandingan"
+          description="Masukkan Game ID untuk menonton tanpa ikut bermain."
         />
       </div>
 

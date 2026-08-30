@@ -13,7 +13,7 @@ export function MoveHistory() {
   }
 
   return (
-    <div className="bg-espresso-900/60 border border-walnut-700 rounded-lg p-3 max-h-64 overflow-y-auto">
+    <div className="bg-espresso-900/60 bg-[url('/textures/wood-grain.svg')] bg-cover bg-blend-multiply border border-walnut-700 rounded-lg p-3 max-h-64 overflow-y-auto">
       <h3 className="font-display text-parchment-100 text-sm uppercase tracking-wide mb-2 opacity-80">
         Move History
       </h3>

@@ -24,6 +24,32 @@ rather than faked:
 | Multiplayer rooms, Game ID, QR code, share | **Fully real** — IDs are generated dynamically, QR encodes a real join URL, share uses the Web Share API with clipboard fallback |
 | Realtime move sync | **Real Supabase Realtime implementation**, active the moment you set `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Without those, the app **honestly shows "not configured"** instead of faking sync — see `lib/realtime/provider.ts` |
 | PWA (manifest, service worker, install prompt) | **Fully real** — uses the real `beforeinstallprompt` event, not a fake button |
+| Player name (first-visit prompt + rename) | **Fully real**, persisted to `localStorage` per browser |
+| Names shown on the board (nameplates) | **Fully real** — exchanged live between players over the same realtime channel as moves |
+| In-match chat | **Fully real** — real-time broadcast over the same Supabase channel as moves, styled as a wood-toned "meja bincang" panel |
+| Spectator mode | **Fully real** — enter any Game ID with "Tonton Pertandingan" to join the room's channel read-only (no move rights, chat still works) |
+| Move/capture/check/game-end sounds | **Synthesized at runtime** with the Web Audio API (see honesty note below) — not recorded audio samples |
+| Custom fonts (Leander for names, Wood Chaos for titles) | **Fully real**, self-hosted via `@font-face` in `app/fonts.css` — see font licensing note below |
+
+### Sound effects — honesty note
+
+`lib/audio/sfx.ts` generates short percussive tones with oscillators and a
+low-pass filter to approximate "wood on wood" chess sounds. This sandbox
+has no network access to source real recorded audio samples, so nothing
+here is a sampled chess-set sound. Swapping in real recordings later is a
+drop-in change — replace the `playTone(...)` calls in that file with
+`<audio>` playback of your own `.mp3`/`.wav` files.
+
+### Font licensing note
+
+- **Leander** (used for player names): free for personal *and* commercial
+  use, including web embedding, per its included license file.
+- **Wood Chaos** (used for titles, via Wood Chaos.otf, by Woodcutter
+  Manero): fonts from this foundry are commonly distributed as
+  **free for personal use only** — commercial use typically requires
+  contacting the foundry directly. This project embeds the font because
+  it was supplied directly for this build; if you plan to ship Royal64
+  commercially, confirm licensing terms with Woodcutter Manero first.
 
 ---
 
@@ -117,6 +143,8 @@ Royal64/
 │   └── store/            # Zustand game state store
 ├── public/
 │   ├── icons/            # PWA icons (SVG)
+│   ├── fonts/            # Leander.ttf, WoodChaos.otf (self-hosted)
+│   ├── textures/         # Wood-grain SVG texture used across the UI
 │   ├── manifest.webmanifest
 │   └── sw.js             # Service worker (cache strategy + offline)
 ├── tests/                # Vitest unit tests for chess rules

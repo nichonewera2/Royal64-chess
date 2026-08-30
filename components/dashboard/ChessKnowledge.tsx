@@ -21,7 +21,7 @@ export function ChessKnowledge() {
         {CARDS.map((card) => (
           <div
             key={card.title}
-            className="bg-espresso-900/50 border border-walnut-700 rounded-xl p-5"
+            className="bg-espresso-900/50 bg-[url('/textures/wood-grain.svg')] bg-cover bg-blend-multiply border border-walnut-700 rounded-xl p-5"
           >
             <h3 className="font-display text-parchment-100 mb-2">{card.title}</h3>
             <p className="text-sm text-parchment-300/70">{card.body}</p>

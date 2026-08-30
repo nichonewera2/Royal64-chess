@@ -3,6 +3,7 @@ import { QuickActions } from '@/components/dashboard/QuickActions';
 import { ChessKnowledge } from '@/components/dashboard/ChessKnowledge';
 import { ThemeSelector } from '@/components/dashboard/ThemeSelector';
 import { DashboardNav } from '@/components/dashboard/DashboardNav';
+import { PlayerNameCard } from '@/components/dashboard/PlayerNameCard';
 
 export default function DashboardPage() {
   return (
@@ -18,6 +19,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <QuickActions />
+        <PlayerNameCard />
         <ChessKnowledge />
         <div id="settings">
           <ThemeSelector />

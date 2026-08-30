@@ -1,10 +1,17 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import type { Square } from 'chess.js';
 import { useGameStore } from '@/lib/store/gameStore';
 import { ChessSquare } from './ChessSquare';
 import { PromotionModal } from './PromotionModal';
+import {
+  playMoveSound,
+  playCaptureSound,
+  playCastleSound,
+  playCheckSound,
+  playGameEndSound
+} from '@/lib/audio/sfx';
 
 interface ChessBoardProps {
   /** When false, the board flips to show black at the bottom. */
@@ -20,12 +27,38 @@ export function ChessBoard({
   onMoveCommitted,
   locked = false
 }: ChessBoardProps) {
-  const { engine, selectedSquare, legalTargets, selectSquare, playMove, status, moveList } =
+  const { engine, selectedSquare, legalTargets, selectSquare, playMove, status, moveList, lastMoveMeta } =
     useGameStore();
 
   const [pendingPromotion, setPendingPromotion] = useState<{ from: Square; to: Square } | null>(
     null
   );
+
+  // Plays a sound whenever a move actually lands in the store — this fires
+  // for BOTH the local player's move and an opponent's move arriving over
+  // realtime, since both paths update moveList/lastMoveMeta the same way.
+  const lastPlayedCount = useRef(0);
+  useEffect(() => {
+    if (moveList.length === 0) {
+      lastPlayedCount.current = 0;
+      return;
+    }
+    if (moveList.length === lastPlayedCount.current) return;
+    lastPlayedCount.current = moveList.length;
+
+    if (status === 'checkmate' || status.startsWith('draw') || status === 'stalemate') {
+      playGameEndSound();
+    } else if (status === 'check') {
+      playCheckSound();
+    } else if (lastMoveMeta?.isCastle) {
+      playCastleSound();
+    } else if (lastMoveMeta?.isCapture) {
+      playCaptureSound();
+    } else {
+      playMoveSound();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [moveList.length]);
 
   // moveList.length is intentionally in the deps: it forces a re-derive of
   // the board snapshot after each move commits, even though `engine` itself

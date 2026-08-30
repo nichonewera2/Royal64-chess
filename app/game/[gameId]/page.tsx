@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Eye } from 'lucide-react';
 import { isValidGameId } from '@/lib/chess/gameId';
-import { OnlineGame } from '@/components/chess/OnlineGame';
+import { OnlineGame, type SeatRole } from '@/components/chess/OnlineGame';
+import { usePlayerStore } from '@/lib/store/playerStore';
 import { useToastStore } from '@/components/ui/Toast';
 
 export default function GameRoomPage() {
@@ -13,14 +14,20 @@ export default function GameRoomPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const push = useToastStore((s) => s.push);
-  const [playerId] = useState(() => `player-${Math.random().toString(36).slice(2, 9)}`);
+  const { name, playerId, hydrated, hydrate } = usePlayerStore();
 
   const gameId = decodeURIComponent(params.gameId ?? '').toUpperCase();
   const valid = isValidGameId(gameId);
+  const isSpectating = searchParams.get('watch') === '1';
   // The share/QR link carries ?seat=b for the joining player; the creator's
   // own browser opens the room without that param and defaults to White.
   // See lib/chess/gameId.ts buildJoinUrl for where this is set.
-  const playerColor: 'w' | 'b' = searchParams.get('seat') === 'b' ? 'b' : 'w';
+  const role: SeatRole = isSpectating ? 'spectator' : searchParams.get('seat') === 'b' ? 'b' : 'w';
+
+  useEffect(() => {
+    hydrate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!valid) {
@@ -46,6 +53,10 @@ export default function GameRoomPage() {
     );
   }
 
+  if (!hydrated) return null; // brief flash while player identity loads
+
+  const displayName = name ?? (role === 'spectator' ? 'Penonton' : 'Pemain');
+
   return (
     <main className="min-h-screen bg-espresso-950 px-6 py-8">
       <div className="max-w-5xl mx-auto">
@@ -53,11 +64,12 @@ export default function GameRoomPage() {
           <button onClick={() => router.push('/game')} className="text-parchment-300/70 hover:text-gold-400">
             <ArrowLeft size={20} />
           </button>
-          <h1 className="font-display text-2xl text-parchment-100">
+          <h1 className="font-display text-2xl text-parchment-100 flex items-center gap-2">
             Room <span className="text-gold-400 font-mono">{gameId}</span>
+            {role === 'spectator' && <Eye size={18} className="text-gold-400" />}
           </h1>
         </div>
-        <OnlineGame gameId={gameId} playerId={playerId} playerColor={playerColor} />
+        <OnlineGame gameId={gameId} playerId={playerId} playerName={displayName} role={role} />
       </div>
     </main>
   );

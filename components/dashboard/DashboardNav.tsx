@@ -17,7 +17,7 @@ export function DashboardNav() {
   return (
     <>
       {/* Desktop sidebar */}
-      <nav className="hidden lg:flex flex-col w-56 shrink-0 border-r border-walnut-700 bg-espresso-950 px-4 py-6 gap-6 min-h-screen sticky top-0">
+      <nav className="hidden lg:flex flex-col w-56 shrink-0 border-r border-walnut-700 bg-espresso-950 bg-[url('/textures/wood-grain.svg')] bg-cover bg-blend-multiply px-4 py-6 gap-6 min-h-screen sticky top-0">
         <Link href="/" className="flex items-center gap-2 text-parchment-100">
           <Crown className="text-gold-400" size={22} />
           <span className="font-display text-lg">Royal64</span>

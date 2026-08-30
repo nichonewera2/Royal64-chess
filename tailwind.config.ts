@@ -34,9 +34,10 @@ const config: Config = {
         bronze: '#8a6a3f'
       },
       fontFamily: {
-        display: ['var(--font-display)', 'ui-serif', 'Georgia', 'serif'],
+        display: ['"Wood Chaos"', 'var(--font-display)', 'ui-serif', 'Georgia', 'serif'],
         body: ['var(--font-body)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-mono)', 'ui-monospace', 'SFMono-Regular', 'monospace']
+        mono: ['var(--font-mono)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        player: ['Leander', 'var(--font-display)', 'cursive']
       },
       boxShadow: {
         board: '0 20px 60px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,162,75,0.15)',

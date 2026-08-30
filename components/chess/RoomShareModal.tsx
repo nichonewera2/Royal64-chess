@@ -53,7 +53,7 @@ export function RoomShareModal({ gameId, onClose }: RoomShareModalProps) {
           exit={{ scale: 0.95, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 26 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-walnut-800 border border-gold-500/40 rounded-2xl p-6 w-full max-w-sm shadow-panel relative"
+          className="bg-walnut-800 bg-[url('/textures/wood-grain.svg')] bg-cover border border-gold-500/40 rounded-2xl p-6 w-full max-w-sm shadow-panel relative"
         >
           <button
             onClick={onClose}
