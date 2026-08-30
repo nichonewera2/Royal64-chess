@@ -83,6 +83,11 @@ class SupabaseRealtimeProvider implements RealtimeProvider {
   private channel: any = null;
   private currentStatus: RealtimeStatus = 'connecting';
   private statusListeners: Set<(status: RealtimeStatus) => void> = new Set();
+  // Registered independently of connection timing — see connect() below for
+  // why this matters: onMove()/onPresence() can be called by the component
+  // before connect() has actually created the channel.
+  private moveListeners: Set<(payload: RoomMovePayload) => void> = new Set();
+  private presenceListeners: Set<(state: PresenceState) => void> = new Set();
 
   status(): RealtimeStatus {
     return this.currentStatus;
@@ -101,13 +106,16 @@ class SupabaseRealtimeProvider implements RealtimeProvider {
 
   /**
    * Resolves once the channel is actually SUBSCRIBED (or times out after 10s
-   * and marks the room disconnected). Previously this resolved immediately
-   * after calling `channel.subscribe()`, before the subscription callback
-   * ever fired — which left the UI stuck showing "Connecting..." forever
-   * even after a real connection succeeded, because nothing told the UI to
-   * check again. Now the promise itself tracks the real outcome, and
-   * onStatusChange (above) keeps the UI in sync for any status change that
-   * happens later too (e.g. a dropped connection).
+   * and marks the room disconnected).
+   *
+   * BUG FIX NOTE: this method also wires up the actual `channel.on(...)`
+   * bindings for moves and presence — that used to happen lazily inside
+   * onMove()/onPresence(), which silently failed if those were called
+   * before `this.channel` existed yet (which they reliably were, since
+   * OnlineGame.tsx calls provider.onMove() right after calling
+   * provider.connect() without awaiting it). Now onMove()/onPresence() just
+   * add to a listener Set that this method reads from once the channel is
+   * actually created, so registration order no longer matters.
    */
   async connect(gameId: string, playerId: string) {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -121,6 +129,17 @@ class SupabaseRealtimeProvider implements RealtimeProvider {
     this.client = createClient(url, key);
     this.channel = this.client.channel(`room:${gameId}`, {
       config: { presence: { key: playerId } }
+    });
+
+    this.channel.on('broadcast', { event: 'move' }, ({ payload }: any) => {
+      this.moveListeners.forEach((cb) => cb(payload));
+    });
+
+    this.channel.on('presence', { event: 'sync' }, () => {
+      // Simplified presence sync — production version would diff state.
+      this.presenceListeners.forEach((cb) =>
+        cb({ gameId, playerId: '', connected: true, lastSeen: Date.now() })
+      );
     });
 
     await new Promise<void>((resolve) => {
@@ -161,18 +180,13 @@ class SupabaseRealtimeProvider implements RealtimeProvider {
   }
 
   onMove(cb: (payload: RoomMovePayload) => void) {
-    if (!this.channel) return () => {};
-    this.channel.on('broadcast', { event: 'move' }, ({ payload }: any) => cb(payload));
-    return () => {};
+    this.moveListeners.add(cb);
+    return () => this.moveListeners.delete(cb);
   }
 
   onPresence(cb: (state: PresenceState) => void) {
-    if (!this.channel) return () => {};
-    this.channel.on('presence', { event: 'sync' }, () => {
-      // Simplified presence sync — production version would diff state.
-      cb({ gameId: '', playerId: '', connected: true, lastSeen: Date.now() });
-    });
-    return () => {};
+    this.presenceListeners.add(cb);
+    return () => this.presenceListeners.delete(cb);
   }
 }
 
