@@ -13,15 +13,26 @@ interface PendingRequest {
 
 interface HostLobbyProps {
   gameId: string;
+  hostSeat: 'w' | 'b';
+  timeControlMs: number | null;
   pendingRequests: PendingRequest[];
   onAccept: (playerId: string) => void;
   onDecline: (playerId: string) => void;
 }
 
-export function HostLobby({ gameId, pendingRequests, onAccept, onDecline }: HostLobbyProps) {
+export function HostLobby({
+  gameId,
+  hostSeat,
+  timeControlMs,
+  pendingRequests,
+  onAccept,
+  onDecline
+}: HostLobbyProps) {
   const [copied, setCopied] = useState(false);
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://royal64.app';
-  const joinUrl = buildJoinUrl(gameId, origin);
+  const joinerSeat: 'w' | 'b' = hostSeat === 'w' ? 'b' : 'w';
+  const joinUrl = buildJoinUrl(gameId, origin, joinerSeat, timeControlMs);
+  const timeLabel = timeControlMs === null ? 'Tanpa batas waktu' : `${Math.round(timeControlMs / 60000)} menit per pemain`;
 
   async function handleCopy() {
     await navigator.clipboard.writeText(joinUrl);
@@ -55,6 +66,11 @@ export function HostLobby({ gameId, pendingRequests, onAccept, onDecline }: Host
         <p className="text-parchment-300/70 text-sm text-center">
           Bagikan QR atau kode ini ke lawanmu untuk mulai bertanding.
         </p>
+        <div className="flex items-center gap-2 text-xs text-gold-400/90 bg-gold-500/10 border border-gold-500/30 rounded-full px-3 py-1 mt-1">
+          <span>{hostSeat === 'w' ? '♔ Kamu bermain Putih' : '♚ Kamu bermain Hitam'}</span>
+          <span className="text-parchment-300/40">·</span>
+          <span>{timeLabel}</span>
+        </div>
       </div>
 
       <div className="bg-ivory rounded-2xl p-4 shadow-board">

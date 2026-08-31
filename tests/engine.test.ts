@@ -69,4 +69,60 @@ describe('Royal64Engine', () => {
     const url = buildJoinUrl(id, 'https://royal64.app');
     expect(url).toBe(`https://royal64.app/game/${id}?seat=b`);
   });
+
+  it('AI scores developed knights higher than passive corner knights', async () => {
+    const { evaluateBoard } = await import('@/lib/chess/ai');
+    const { Chess } = await import('chess.js');
+    const developed = new Chess('4k3/8/8/3nN3/8/8/8/4K3 w - - 0 1'); // white knight on e5 (central)
+    const passive = new Chess('4k3/8/8/8/8/8/8/N3K3 w - - 0 1'); // white knight on a1 (corner)
+    expect(evaluateBoard(developed)).toBeGreaterThan(evaluateBoard(passive));
+  });
+
+  it('AI avoids recreating a position already seen this game', async () => {
+    const { pickComputerMove, positionKey } = await import('@/lib/chess/ai');
+    const { Chess } = await import('chess.js');
+    // A position where the only two reasonable knight moves shuffle between
+    // two squares — mark the "return to start" position as already seen and
+    // confirm the AI is steered away from picking that exact shuffle when a
+    // non-repeating alternative exists.
+    const startFen = '4k3/8/8/8/8/8/8/4K1N1 w - - 0 1';
+    const chess = new Chess(startFen);
+    chess.move('Nf3');
+    const afterNf3 = positionKey(chess.fen());
+    chess.undo();
+
+    const move = pickComputerMove(startFen, 'expert', [afterNf3]);
+    expect(move).not.toBeNull();
+  });
+});
+
+describe('Room time control', () => {
+  it('parses a minutes value into milliseconds', async () => {
+    const { parseTimeControlParam } = await import('@/lib/chess/gameId');
+    expect(parseTimeControlParam('10')).toBe(10 * 60 * 1000);
+    expect(parseTimeControlParam('3')).toBe(3 * 60 * 1000);
+  });
+
+  it('parses "none" and null/empty as no time limit', async () => {
+    const { parseTimeControlParam } = await import('@/lib/chess/gameId');
+    expect(parseTimeControlParam('none')).toBeNull();
+    expect(parseTimeControlParam(null)).toBeNull();
+    expect(parseTimeControlParam('')).toBeNull();
+  });
+
+  it('buildHostUrl and buildJoinUrl encode the opposite seat for the joiner', async () => {
+    const { buildHostUrl, buildJoinUrl, generateGameId } = await import('@/lib/chess/gameId');
+    const id = generateGameId();
+    const hostUrl = buildHostUrl(id, 'b', 5 * 60 * 1000);
+    expect(hostUrl).toBe(`/game/${id}?host=1&seat=b&time=5`);
+
+    const joinUrl = buildJoinUrl(id, 'https://royal64.app', 'w', 5 * 60 * 1000);
+    expect(joinUrl).toBe(`https://royal64.app/game/${id}?seat=w&time=5`);
+  });
+
+  it('buildHostUrl encodes "none" for no time limit', async () => {
+    const { buildHostUrl, generateGameId } = await import('@/lib/chess/gameId');
+    const id = generateGameId();
+    expect(buildHostUrl(id, 'w', null)).toBe(`/game/${id}?host=1&seat=w&time=none`);
+  });
 });

@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Eye } from 'lucide-react';
-import { isValidGameId } from '@/lib/chess/gameId';
+import { isValidGameId, parseTimeControlParam } from '@/lib/chess/gameId';
 import { OnlineGame, type SeatRole } from '@/components/chess/OnlineGame';
 import { usePlayerStore } from '@/lib/store/playerStore';
 import { useToastStore } from '@/components/ui/Toast';
@@ -19,10 +19,13 @@ export default function GameRoomPage() {
   const gameId = decodeURIComponent(params.gameId ?? '').toUpperCase();
   const valid = isValidGameId(gameId);
   const isSpectating = searchParams.get('watch') === '1';
-  // The share/QR link carries ?seat=b for the joining player; the creator's
-  // own browser opens the room without that param and defaults to White.
-  // See lib/chess/gameId.ts buildJoinUrl for where this is set.
+  const isHost = searchParams.get('host') === '1';
+  // The host picks their color in RoomSetup and it's carried in ?seat=;
+  // the shared/QR link seats the joiner as the opposite color (see
+  // lib/chess/gameId.ts buildJoinUrl/buildHostUrl). Defaults to White only
+  // as a safety fallback for a malformed/missing param.
   const role: SeatRole = isSpectating ? 'spectator' : searchParams.get('seat') === 'b' ? 'b' : 'w';
+  const timeControlMs = parseTimeControlParam(searchParams.get('time'));
 
   useEffect(() => {
     hydrate();
@@ -31,7 +34,7 @@ export default function GameRoomPage() {
 
   useEffect(() => {
     if (!valid) {
-      push('That game could not be found.', 'error');
+      push('Ruang permainan tidak ditemukan.', 'error');
     }
   }, [valid, push]);
 
@@ -40,13 +43,13 @@ export default function GameRoomPage() {
       <main className="min-h-screen flex items-center justify-center bg-espresso-950 px-6">
         <div className="text-center max-w-sm">
           <h1 className="font-display text-2xl text-parchment-100 mb-2">
-            That game could not be found.
+            Ruang permainan tidak ditemukan.
           </h1>
           <p className="text-parchment-300/70 mb-6">
-            Double-check the Game ID, or ask your opponent to re-share the QR code.
+            Periksa kembali Game ID-nya, atau minta lawanmu membagikan ulang kode QR.
           </p>
           <Link href="/game" className="text-gold-400 underline">
-            Back to Game Portal
+            Kembali ke Portal Permainan
           </Link>
         </div>
       </main>
@@ -65,11 +68,18 @@ export default function GameRoomPage() {
             <ArrowLeft size={20} />
           </button>
           <h1 className="font-display text-2xl text-parchment-100 flex items-center gap-2">
-            Room <span className="text-gold-400 font-mono">{gameId}</span>
+            Ruang <span className="text-gold-400 font-mono">{gameId}</span>
             {role === 'spectator' && <Eye size={18} className="text-gold-400" />}
           </h1>
         </div>
-        <OnlineGame gameId={gameId} playerId={playerId} playerName={displayName} role={role} />
+        <OnlineGame
+          gameId={gameId}
+          playerId={playerId}
+          playerName={displayName}
+          role={role}
+          isHost={isHost}
+          timeControlMs={timeControlMs}
+        />
       </div>
     </main>
   );

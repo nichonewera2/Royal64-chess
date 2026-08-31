@@ -4,6 +4,15 @@ import type { Square, PieceSymbol, Color } from 'chess.js';
 import { ChessPiece } from './ChessPiece';
 import clsx from 'clsx';
 
+const PIECE_NAME_ID: Record<PieceSymbol, string> = {
+  p: 'pion',
+  n: 'kuda',
+  b: 'gajah',
+  r: 'benteng',
+  q: 'menteri',
+  k: 'raja'
+};
+
 interface ChessSquareProps {
   square: Square;
   piece: { type: PieceSymbol; color: Color } | null;
@@ -33,7 +42,7 @@ export function ChessSquare({
     <button
       type="button"
       onClick={() => onSelect(square)}
-      aria-label={`Square ${square}${piece ? `, ${piece.color === 'w' ? 'white' : 'black'} ${piece.type}` : ', empty'}`}
+      aria-label={`Petak ${square}${piece ? `, ${piece.color === 'w' ? 'putih' : 'hitam'} ${PIECE_NAME_ID[piece.type]}` : ', kosong'}`}
       className={clsx(
         'relative aspect-square w-full flex items-center justify-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 focus-visible:z-10',
         isDark ? 'bg-wood-dark' : 'bg-wood-light',

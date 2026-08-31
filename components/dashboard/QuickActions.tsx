@@ -14,13 +14,13 @@ function ActionCard({ href, icon, title, description }: ActionCardProps) {
   return (
     <Link
       href={href}
-      className="group flex flex-col gap-2 bg-espresso-800/70 bg-[url('/textures/wood-grain.svg')] bg-cover bg-blend-multiply border border-walnut-700 hover:border-gold-500/60 rounded-xl p-5 transition-colors"
+      className="group flex flex-col gap-2 chrome-bg-card bg-[url('/textures/wood-grain.svg')] bg-cover bg-blend-multiply border chrome-border hover:border-gold-500/60 rounded-xl p-5 transition-colors shadow-sm"
     >
       <span className="w-10 h-10 rounded-lg bg-mahogany-600/30 text-gold-400 flex items-center justify-center group-hover:bg-mahogany-600/60 transition-colors">
         {icon}
       </span>
-      <h3 className="font-display text-lg text-parchment-100">{title}</h3>
-      <p className="text-sm text-parchment-300/70">{description}</p>
+      <h3 className="font-display text-lg chrome-text">{title}</h3>
+      <p className="text-sm chrome-text-muted">{description}</p>
     </Link>
   );
 }
@@ -28,41 +28,41 @@ function ActionCard({ href, icon, title, description }: ActionCardProps) {
 export function QuickActions() {
   return (
     <section className="max-w-5xl mx-auto px-6 py-10">
-      <h2 className="font-display text-2xl text-parchment-100 mb-4">Quick Play</h2>
+      <h2 className="font-display text-2xl chrome-text mb-4">Main Cepat</h2>
       <div className="grid sm:grid-cols-3 gap-4 mb-10">
         <ActionCard
           href="/game?mode=computer"
           icon={<Cpu size={20} />}
-          title="Play vs Computer"
-          description="Challenge the Royal64 AI at three difficulty levels."
+          title="Lawan Komputer"
+          description="Tantang Royal64 AI di tiga tingkat kesulitan."
         />
         <ActionCard
           href="/game?mode=create"
           icon={<Plus size={20} />}
-          title="Create Game"
-          description="Start a room and invite a friend by ID or QR code."
+          title="Buat Ruang"
+          description="Buat ruang dan undang teman lewat ID atau kode QR."
         />
         <ActionCard
           href="/game?mode=join"
           icon={<LogIn size={20} />}
-          title="Join Game"
-          description="Enter a Game ID to jump straight into a room."
+          title="Gabung Ruang"
+          description="Masukkan Game ID untuk langsung masuk ruang."
         />
       </div>
 
-      <h2 className="font-display text-2xl text-parchment-100 mb-4">Multiplayer</h2>
+      <h2 className="font-display text-2xl chrome-text mb-4">Main Bersama</h2>
       <div className="grid sm:grid-cols-3 gap-4 mb-10">
         <ActionCard
           href="/game?mode=create"
           icon={<Users size={20} />}
-          title="Create Room"
-          description="Generate a fresh Game ID for a new match."
+          title="Buat Ruang Baru"
+          description="Buat Game ID baru untuk pertandingan baru."
         />
         <ActionCard
           href="/game?mode=join"
           icon={<LogIn size={20} />}
-          title="Join with ID"
-          description="Type in a friend's Game ID (e.g. R64-X7K9P)."
+          title="Gabung dengan ID"
+          description="Masukkan Game ID milik teman (mis. R64-X7K9P)."
         />
         <ActionCard
           href="/game?mode=watch"
@@ -72,19 +72,19 @@ export function QuickActions() {
         />
       </div>
 
-      <h2 className="font-display text-2xl text-parchment-100 mb-4">Practice</h2>
+      <h2 className="font-display text-2xl chrome-text mb-4">Latihan</h2>
       <div className="grid sm:grid-cols-2 gap-4">
         <ActionCard
           href="/game?mode=puzzle"
           icon={<Puzzle size={20} />}
-          title="Puzzle Mode"
-          description="Sharpen your tactics with curated positions."
+          title="Mode Puzzle"
+          description="Asah taktikmu dengan posisi-posisi pilihan."
         />
         <ActionCard
           href="/game?mode=local"
           icon={<Users size={20} />}
-          title="Local 2 Player"
-          description="Pass-and-play chess on one board, one device."
+          title="Lokal 2 Pemain"
+          description="Main catur bergantian di satu papan, satu perangkat."
         />
       </div>
     </section>

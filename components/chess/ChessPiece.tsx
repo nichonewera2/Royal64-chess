@@ -8,6 +8,15 @@ const GLYPHS: Record<Color, Record<PieceSymbol, string>> = {
   b: { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' }
 };
 
+const PIECE_NAME_ID: Record<PieceSymbol, string> = {
+  p: 'pion',
+  n: 'kuda',
+  b: 'gajah',
+  r: 'benteng',
+  q: 'menteri',
+  k: 'raja'
+};
+
 interface ChessPieceProps {
   type: PieceSymbol;
   color: Color;
@@ -23,7 +32,7 @@ export function ChessPiece({ type, color, isLifted }: ChessPieceProps) {
         color === 'w' ? 'text-ivory' : 'text-espresso-950'
       } ${isLifted ? 'scale-110 -translate-y-1' : ''}`}
       style={{ transition: 'transform 120ms ease-out' }}
-      aria-label={`${color === 'w' ? 'White' : 'Black'} ${type}`}
+      aria-label={`${color === 'w' ? 'Putih' : 'Hitam'} ${PIECE_NAME_ID[type]}`}
     >
       {GLYPHS[color][type]}
     </motion.div>

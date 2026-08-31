@@ -11,11 +11,11 @@ export default function DashboardPage() {
       <DashboardNav />
       <main className="flex-1 pb-20 lg:pb-0">
         <HeroSection />
-        <div className="max-w-5xl mx-auto px-6 pt-10">
-          <h2 className="font-display text-2xl text-parchment-100">Welcome to Royal64</h2>
-          <p className="text-parchment-300/70 mt-2 max-w-2xl">
-            This is your lobby — jump into a game, check your recent matches, or tune
-            the club to your taste before you sit down at the board.
+        <div className="max-w-5xl mx-auto px-6 pt-12">
+          <h2 className="font-display text-2xl chrome-text">Selamat Datang di Royal64</h2>
+          <p className="chrome-text-muted mt-2 max-w-2xl">
+            Ini lobimu — langsung main, cek pertandinganmu, atau atur suasana klub
+            sesuai seleramu sebelum duduk di depan papan.
           </p>
         </div>
         <QuickActions />

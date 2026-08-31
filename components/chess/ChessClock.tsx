@@ -19,12 +19,13 @@ interface ChessClockProps {
 }
 
 export function ChessClock({ color, name, isYou }: ChessClockProps) {
-  const { clock, tickClock, engine, status } = useGameStore();
+  const { clock, tickClock, engine, status, timeControlMs } = useGameStore();
   const lastTick = useRef<number>(Date.now());
   const isActive = engine.turn === color && status !== 'checkmate' && status !== 'stalemate';
+  const hasTimeLimit = timeControlMs !== null;
 
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive || !hasTimeLimit) return;
     lastTick.current = Date.now();
     const interval = setInterval(() => {
       const now = Date.now();
@@ -33,10 +34,10 @@ export function ChessClock({ color, name, isYou }: ChessClockProps) {
       tickClock(color, delta);
     }, 250);
     return () => clearInterval(interval);
-  }, [isActive, color, tickClock]);
+  }, [isActive, hasTimeLimit, color, tickClock]);
 
   const ms = color === 'w' ? clock.whiteMs : clock.blackMs;
-  const isLow = ms < 30_000;
+  const isLow = hasTimeLimit && ms < 30_000;
 
   return (
     <div
@@ -53,7 +54,7 @@ export function ChessClock({ color, name, isYou }: ChessClockProps) {
           isLow && 'text-red-300 animate-pulse'
         )}
       >
-        {formatMs(ms)}
+        {hasTimeLimit ? formatMs(ms) : '∞'}
       </span>
     </div>
   );

@@ -8,8 +8,8 @@ import { ComputerGame } from './ComputerGame';
 import { LocalGame } from './LocalGame';
 import { PuzzleMode } from './PuzzleMode';
 import { QRScanner } from './QRScanner';
-import { RoomShareModal } from './RoomShareModal';
-import { generateGameId, isValidGameId } from '@/lib/chess/gameId';
+import { RoomSetup, type RoomSetupResult } from './RoomSetup';
+import { generateGameId, isValidGameId, buildHostUrl } from '@/lib/chess/gameId';
 import { useToastStore } from '@/components/ui/Toast';
 
 type PortalMode = 'menu' | 'computer' | 'local' | 'create' | 'join' | 'scan' | 'puzzle' | 'watch';
@@ -30,15 +30,14 @@ export function GamePortalClient({ initialMode }: { initialMode?: string }) {
       ? (initialMode as PortalMode)
       : 'menu'
   );
-  const [createdId, setCreatedId] = useState<string | null>(null);
   const [joinInput, setJoinInput] = useState('');
   const [watchInput, setWatchInput] = useState('');
   const router = useRouter();
   const push = useToastStore((s) => s.push);
 
-  function handleCreate() {
+  function handleRoomSetupConfirm({ hostColor, timeControlMs }: RoomSetupResult) {
     const id = generateGameId();
-    setCreatedId(id);
+    router.push(buildHostUrl(id, hostColor, timeControlMs));
   }
 
   function handleJoin() {
@@ -47,7 +46,7 @@ export function GamePortalClient({ initialMode }: { initialMode?: string }) {
       push('Ruang permainan tidak ditemukan.', 'error');
       return;
     }
-    router.push(`/game/${trimmed}?seat=b`);
+    router.push(`/game/${trimmed}`);
   }
 
   function handleWatch() {
@@ -81,18 +80,7 @@ export function GamePortalClient({ initialMode }: { initialMode?: string }) {
   if (mode === 'create') {
     return (
       <PortalShell title="Buat Ruang">
-        <div className="text-center max-w-md mx-auto py-16">
-          {!createdId ? (
-            <button
-              onClick={handleCreate}
-              className="bg-gold-500 hover:bg-gold-400 text-espresso-950 font-medium px-6 py-3 rounded-lg"
-            >
-              Buat Game ID
-            </button>
-          ) : (
-            <RoomShareModal gameId={createdId} onClose={() => router.push(`/game/${createdId}`)} />
-          )}
-        </div>
+        <RoomSetup onConfirm={handleRoomSetupConfirm} />
       </PortalShell>
     );
   }
@@ -152,21 +140,21 @@ export function GamePortalClient({ initialMode }: { initialMode?: string }) {
   }
 
   return (
-    <PortalShell title="Royal64 Game Portal">
+    <PortalShell title="Portal Permainan Royal64">
       {['Main Online', 'Main Offline', 'Latihan'].map((group) => (
         <div key={group} className="mb-8">
-          <h2 className="font-display text-xl text-parchment-100 mb-3">{group}</h2>
+          <h2 className="font-display text-xl chrome-text mb-3">{group}</h2>
           <div className="grid sm:grid-cols-3 gap-4">
             {MODE_CARDS.filter((c) => c.group === group).map((c) => (
               <button
                 key={c.mode}
                 onClick={() => setMode(c.mode)}
-                className="flex flex-col items-start gap-2 bg-espresso-800/70 border border-walnut-700 hover:border-gold-500/60 rounded-xl p-5 text-left transition-colors"
+                className="flex flex-col items-start gap-2 chrome-bg-card border chrome-border hover:border-gold-500/60 rounded-xl p-5 text-left transition-colors shadow-sm"
               >
                 <span className="w-10 h-10 rounded-lg bg-mahogany-600/30 text-gold-400 flex items-center justify-center">
                   {c.icon}
                 </span>
-                <span className="font-display text-parchment-100">{c.title}</span>
+                <span className="font-display chrome-text">{c.title}</span>
               </button>
             ))}
           </div>
@@ -178,13 +166,13 @@ export function GamePortalClient({ initialMode }: { initialMode?: string }) {
 
 function PortalShell({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-espresso-950 px-6 py-8">
+    <main className="min-h-screen px-6 py-8">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
-          <Link href="/dashboard" className="text-parchment-300/70 hover:text-gold-400">
+          <Link href="/dashboard" className="chrome-text-muted hover:text-gold-400">
             <ArrowLeft size={20} />
           </Link>
-          <h1 className="font-display text-2xl text-parchment-100">{title}</h1>
+          <h1 className="font-display text-2xl chrome-text">{title}</h1>
         </div>
         {children}
       </div>

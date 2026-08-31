@@ -4,10 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { Color } from 'chess.js';
 
 const PIECES: Array<{ key: 'q' | 'r' | 'b' | 'n'; label: string }> = [
-  { key: 'q', label: 'Queen' },
-  { key: 'r', label: 'Rook' },
-  { key: 'b', label: 'Bishop' },
-  { key: 'n', label: 'Knight' }
+  { key: 'q', label: 'Menteri' },
+  { key: 'r', label: 'Benteng' },
+  { key: 'b', label: 'Gajah' },
+  { key: 'n', label: 'Kuda' }
 ];
 
 const GLYPHS: Record<Color, Record<string, string>> = {
@@ -26,7 +26,7 @@ export function PromotionModal({ color, onSelect, onClose }: PromotionModalProps
     <AnimatePresence>
       <motion.div
         role="dialog"
-        aria-label="Choose promotion piece"
+        aria-label="Pilih bidak promosi"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -40,7 +40,7 @@ export function PromotionModal({ color, onSelect, onClose }: PromotionModalProps
           className="bg-walnut-800 bg-[url('/textures/wood-grain.svg')] bg-cover border border-gold-500/40 rounded-xl p-6 shadow-panel"
         >
           <p className="font-display text-parchment-100 text-center mb-4 text-lg">
-            Promote your pawn
+            Promosikan pion Anda
           </p>
           <div className="flex gap-3">
             {PIECES.map((p) => (

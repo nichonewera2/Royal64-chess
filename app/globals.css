@@ -4,21 +4,73 @@
 
 :root {
   color-scheme: dark;
+  --chrome-bg: 15 10 6;
+  --chrome-bg-elevated: 23 15 9;
+  --chrome-bg-card: 31 21 13;
+  --chrome-text: 246 233 207;
+  --chrome-text-muted: 227 198 145;
+  --chrome-border: 74 51 29;
 }
 
 html[data-theme='light'] {
   color-scheme: light;
+  --chrome-bg: 246 237 218;
+  --chrome-bg-elevated: 255 250 240;
+  --chrome-bg-card: 255 255 255;
+  --chrome-text: 36 26 16;
+  --chrome-text-muted: 90 68 45;
+  --chrome-border: 216 195 154;
 }
 
 body {
-  @apply bg-espresso-950 text-parchment-100 antialiased;
+  @apply antialiased;
+  color: rgb(var(--chrome-text));
+  background-color: rgb(var(--chrome-bg));
   font-feature-settings: 'kern';
   background-image:
-    linear-gradient(rgba(28, 19, 13, 0.88), rgba(28, 19, 13, 0.93)),
+    linear-gradient(rgba(15, 10, 6, 0.88), rgba(15, 10, 6, 0.93)),
     url('/textures/wood-grain.svg');
   background-size: cover, 480px 480px;
   background-attachment: fixed, fixed;
   background-repeat: no-repeat, repeat;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+/* Light mode drops the dark wood-grain photo overlay in favor of a clean
+   warm parchment backdrop — the wood texture reads as "dark room" and
+   fighting that with filters looks muddy, so we swap the image outright. */
+html[data-theme='light'] body {
+  background-image: linear-gradient(180deg, rgb(246 237 218), rgb(238 226 199));
+}
+
+/* "Chrome" utility classes: the site shell (nav, dashboard cards, portal
+   panels) uses these instead of hardcoded espresso-* so the theme toggle
+   has a real, visible effect. The chess board itself, in-game sidebar,
+   and clocks intentionally keep their fixed dark-wood look in both
+   themes — like a physical wood chess set, the board doesn't change
+   color with the room lighting. This is a deliberate scope, not an
+   oversight: it keeps every board-legibility color (piece contrast,
+   square shading) verified and unchanged. */
+.chrome-bg {
+  background-color: rgb(var(--chrome-bg));
+}
+.chrome-bg-elevated {
+  background-color: rgb(var(--chrome-bg-elevated));
+}
+.chrome-bg-card {
+  background-color: rgb(var(--chrome-bg-card));
+}
+.chrome-text {
+  color: rgb(var(--chrome-text));
+}
+.chrome-text-muted {
+  color: rgb(var(--chrome-text-muted));
+}
+.chrome-border {
+  border-color: rgb(var(--chrome-border));
+}
+.chrome-hover-card:hover {
+  background-color: rgb(var(--chrome-bg-card));
 }
 
 ::selection {

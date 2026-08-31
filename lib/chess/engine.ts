@@ -1,4 +1,5 @@
 import { Chess, type Square, type Move, type PieceSymbol, type Color } from 'chess.js';
+import { positionKey } from './ai';
 
 /**
  * Royal64 chess engine wrapper.
@@ -60,6 +61,16 @@ export class Royal64Engine {
 
   get history(): Move[] {
     return this.chess.history({ verbose: true });
+  }
+
+  /**
+   * Position keys (board+turn+castling+en passant, ignoring move clocks)
+   * for every position reached so far this game — used by the computer
+   * opponent to avoid repeating a position it just came from. See
+   * lib/chess/ai.ts positionKey / pickComputerMove.
+   */
+  recentPositionKeys(): string[] {
+    return this.history.map((m) => positionKey((m as any).after ?? this.chess.fen()));
   }
 
   board(): SquareInfo[][] {

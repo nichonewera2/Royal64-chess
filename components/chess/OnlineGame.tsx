@@ -23,6 +23,10 @@ interface OnlineGameProps {
   playerName: string;
   /** 'w' or 'b' for an actual player; 'spectator' for read-only watching. */
   role: SeatRole;
+  /** True for whoever created the room — they see the approval lobby with QR/code. */
+  isHost: boolean;
+  /** Starting time per side in ms, or null for no time limit. */
+  timeControlMs: number | null;
 }
 
 const STATUS_COPY: Record<RealtimeStatus, { label: string; tone: string }> = {
@@ -38,13 +42,41 @@ const STATUS_COPY: Record<RealtimeStatus, { label: string; tone: string }> = {
 const DEFAULT_WHITE_NAME = 'Menunggu Putih…';
 const DEFAULT_BLACK_NAME = 'Menunggu Hitam…';
 
-export function OnlineGame({ gameId, playerId, playerName, role }: OnlineGameProps) {
+export function OnlineGame({ gameId, playerId, playerName, role, isHost, timeControlMs }: OnlineGameProps) {
   const { resetGame, playMove, engine, resign, offerDraw, respondDraw } = useGameStore();
   const [status, setStatus] = useState<RealtimeStatus>('connecting');
   const [whiteName, setWhiteName] = useState(role === 'w' ? playerName : DEFAULT_WHITE_NAME);
   const [blackName, setBlackName] = useState(role === 'b' ? playerName : DEFAULT_BLACK_NAME);
   const provider = getRealtimeProvider(gameId);
   const repliedToPeers = useRef<Set<string>>(new Set());
+
+  // The host's own color/time control are fixed (chosen in RoomSetup) and
+  // never change. A JOINER's color/time control are only a best-effort
+  // guess from the URL until the host's approval message arrives — that
+  // message is authoritative, so someone who typed a bare Game ID by hand
+  // (with no seat/time in the URL at all) still ends up correctly
+  // configured the moment they're let in, not just people who opened the
+  // real share link/QR.
+  const [resolvedRole, setResolvedRole] = useState<SeatRole>(role);
+  const [resolvedTimeControlMs, setResolvedTimeControlMs] = useState(timeControlMs);
+  // Refs mirroring the two state values above — needed because the
+  // realtime listeners are set up once inside a `useEffect(..., [gameId])`
+  // that never re-runs, so their closures would otherwise keep reading the
+  // STALE state captured at mount time even after setResolvedRole/
+  // setGameStarted update later (e.g. right after host approval). Every
+  // update to the state also writes the ref in the same call.
+  const resolvedRoleRef = useRef<SeatRole>(role);
+  const gameStartedRef = useRef(role === 'spectator');
+
+  function updateResolvedRole(next: SeatRole) {
+    resolvedRoleRef.current = next;
+    setResolvedRole(next);
+  }
+
+  function updateGameStarted(next: boolean) {
+    gameStartedRef.current = next;
+    setGameStarted(next);
+  }
 
   // --- Waiting-room lobby state ---
   // Spectators skip the lobby entirely and just watch whatever's on the
@@ -61,20 +93,30 @@ export function OnlineGame({ gameId, playerId, playerName, role }: OnlineGamePro
   const hasSentJoinRequest = useRef(false);
 
   useEffect(() => {
-    resetGame('online');
+    resetGame('online', timeControlMs);
     let cancelled = false;
 
     const unsubscribeStatus = provider.onStatusChange((s) => {
       if (cancelled) return;
       setStatus(s);
       // Once connected, announce who we are — and re-announce if we
-      // reconnect after a drop, so a returning opponent sees our name again.
-      if (s === 'connected' && role !== 'spectator') {
-        provider.sendIdentity({ playerId, name: playerName, role });
+      // reconnect after a drop, so a returning opponent sees our name
+      // again. A joiner who hasn't been approved yet must NOT broadcast an
+      // identity yet — their resolvedRole is still just an unconfirmed
+      // guess from the URL, and broadcasting it early could overwrite the
+      // host's own nameplate if the guess happens to collide with the
+      // host's real color.
+      if (s === 'connected' && resolvedRoleRef.current !== 'spectator' && (isHost || gameStartedRef.current)) {
+        provider.sendIdentity({ playerId, name: playerName, role: resolvedRoleRef.current });
       }
       // The joiner asks to enter the room as soon as they're connected.
       // Guarded so a later reconnect doesn't spam duplicate requests.
-      if (s === 'connected' && role === 'b' && !hasSentJoinRequest.current) {
+      if (
+        s === 'connected' &&
+        !isHost &&
+        resolvedRoleRef.current !== 'spectator' &&
+        !hasSentJoinRequest.current
+      ) {
         hasSentJoinRequest.current = true;
         provider.send('join-request', { playerId, name: playerName });
       }
@@ -90,9 +132,14 @@ export function OnlineGame({ gameId, playerId, playerName, role }: OnlineGamePro
       // peer, so whichever side joined/reconnected later still learns who
       // was already in the room. Tracked per-peer (not a single flag) so
       // this keeps working across reconnects and multiple spectators.
-      if (role !== 'spectator' && !repliedToPeers.current.has(identity.playerId)) {
+      // Same guard as above: only reply once our own role is confirmed.
+      if (
+        resolvedRoleRef.current !== 'spectator' &&
+        (isHost || gameStartedRef.current) &&
+        !repliedToPeers.current.has(identity.playerId)
+      ) {
         repliedToPeers.current.add(identity.playerId);
-        provider.sendIdentity({ playerId, name: playerName, role });
+        provider.sendIdentity({ playerId, name: playerName, role: resolvedRoleRef.current });
       }
     });
 
@@ -119,21 +166,31 @@ export function OnlineGame({ gameId, playerId, playerName, role }: OnlineGamePro
     const unsubscribeJoinRequest = provider.on<{ playerId: string; name: string }>(
       'join-request',
       (payload) => {
-        if (role !== 'w') return;
+        if (!isHost) return;
         setPendingRequests((prev) =>
           prev.some((r) => r.playerId === payload.playerId) ? prev : [...prev, payload]
         );
       }
     );
     // Joiner: the host approved us — flip to the board at the same moment
-    // the host does, since both sides react to this same broadcast.
-    const unsubscribeJoinApproved = provider.on<{ playerId: string }>('join-approved', (payload) => {
-      if (role === 'b' && payload.playerId === playerId) {
-        setGameStarted(true);
+    // the host does, since both sides react to this same broadcast. The
+    // approval payload is authoritative for color + time control, so this
+    // works correctly even if we joined by typing a bare Game ID (no
+    // seat/time info in our own URL at all).
+    const unsubscribeJoinApproved = provider.on<{
+      playerId: string;
+      assignedColor: 'w' | 'b';
+      timeControlMs: number | null;
+    }>('join-approved', (payload) => {
+      if (!isHost && payload.playerId === playerId) {
+        updateResolvedRole(payload.assignedColor);
+        setResolvedTimeControlMs(payload.timeControlMs);
+        resetGame('online', payload.timeControlMs);
+        updateGameStarted(true);
       }
     });
     const unsubscribeJoinDeclined = provider.on<{ playerId: string }>('join-declined', (payload) => {
-      if (role === 'b' && payload.playerId === playerId) {
+      if (!isHost && payload.playerId === playerId) {
         setJoinStatus('declined');
       }
     });
@@ -185,13 +242,21 @@ export function OnlineGame({ gameId, playerId, playerName, role }: OnlineGamePro
 
   function handleAcceptJoin(joinerId: string) {
     const request = pendingRequests.find((r) => r.playerId === joinerId);
-    if (request) setBlackName(request.name);
+    const joinerColor: 'w' | 'b' = role === 'b' ? 'w' : 'b';
+    if (request) {
+      if (joinerColor === 'w') setWhiteName(request.name);
+      else setBlackName(request.name);
+    }
     setPendingRequests((prev) => prev.filter((r) => r.playerId !== joinerId));
-    provider.send('join-approved', { playerId: joinerId });
+    provider.send('join-approved', {
+      playerId: joinerId,
+      assignedColor: joinerColor,
+      timeControlMs: resolvedTimeControlMs
+    });
     // The host flips to the board immediately on their own click; the
     // joiner flips the moment the 'join-approved' broadcast above arrives
     // on their screen — both happen within the same realtime round-trip.
-    setGameStarted(true);
+    updateGameStarted(true);
   }
 
   function handleDeclineJoin(joinerId: string) {
@@ -199,11 +264,12 @@ export function OnlineGame({ gameId, playerId, playerName, role }: OnlineGamePro
     provider.send('join-declined', { playerId: joinerId });
   }
 
-  const isPlayer = role === 'w' || role === 'b';
-  const isMyTurn = isPlayer && engine.turn === role;
+  const isPlayer = resolvedRole === 'w' || resolvedRole === 'b';
+  const playerColor: 'w' | 'b' | null = isPlayer ? (resolvedRole as 'w' | 'b') : null;
+  const isMyTurn = isPlayer && engine.turn === playerColor;
   const isConnected = status === 'connected';
   const copy = STATUS_COPY[status];
-  const orientation = role === 'b' ? 'black' : 'white';
+  const orientation = resolvedRole === 'b' ? 'black' : 'white';
 
   if (!gameStarted) {
     return (
@@ -215,9 +281,11 @@ export function OnlineGame({ gameId, playerId, playerName, role }: OnlineGamePro
           {copy.label}
         </div>
 
-        {role === 'w' ? (
+        {isHost ? (
           <HostLobby
             gameId={gameId}
+            hostSeat={role === 'b' ? 'b' : 'w'}
+            timeControlMs={resolvedTimeControlMs}
             pendingRequests={pendingRequests}
             onAccept={handleAcceptJoin}
             onDecline={handleDeclineJoin}
@@ -246,13 +314,13 @@ export function OnlineGame({ gameId, playerId, playerName, role }: OnlineGamePro
         <ChessBoard
           orientation={orientation}
           onMoveCommitted={handleMoveCommitted}
-          locked={role === 'spectator' || !isMyTurn || !isConnected}
+          locked={resolvedRole === 'spectator' || !isMyTurn || !isConnected}
         />
         <ChessSidebar
           whiteName={whiteName}
           blackName={blackName}
-          youAre={isPlayer ? role : null}
-          controlsYouAre={isPlayer ? role : 'both'}
+          youAre={playerColor}
+          controlsYouAre={playerColor ?? 'both'}
           showControls={isPlayer}
           onResign={handleResignBroadcast}
           onDrawOffer={handleDrawOfferBroadcast}

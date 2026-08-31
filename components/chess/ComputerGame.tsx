@@ -35,7 +35,7 @@ export function ComputerGame() {
 
     let cancelled = false;
     setThinking(true);
-    opponent.getMove(fen, difficulty).then((move) => {
+    opponent.getMove(fen, difficulty, engine.recentPositionKeys()).then((move) => {
       if (cancelled || !move) return;
       playMove(move.from as Square, move.to as Square, move.promotion as any);
       setThinking(false);

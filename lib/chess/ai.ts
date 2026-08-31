@@ -1,4 +1,4 @@
-import { Chess, type Move, type Square } from 'chess.js';
+import { Chess, type Move } from 'chess.js';
 
 /**
  * IMPORTANT — HONESTY NOTE (see master spec rule 91):
@@ -12,6 +12,16 @@ import { Chess, type Move, type Square } from 'chess.js';
  * with a swappable interface (`ComputerOpponent`) so a real Stockfish
  * worker can be dropped in later without touching UI code — see
  * lib/chess/computer.ts for the seam.
+ *
+ * BUG FIX NOTE: an earlier version only scored pawns positionally — every
+ * other piece was worth the same wherever it stood, and ties were always
+ * broken by picking whichever legal move chess.js generated first. Since
+ * "shuffle a knight back and forth" and "do nothing" scored identically to
+ * everything else, the AI would visibly get stuck moving the same piece to
+ * the same squares turn after turn. This version scores every piece type
+ * positionally, shuffles the move list so ties break differently each
+ * time, and penalizes moves that repeat a position already seen earlier
+ * in the game.
  */
 
 export type Difficulty = 'beginner' | 'club' | 'expert';
@@ -31,14 +41,85 @@ const PIECE_VALUES: Record<string, number> = {
   k: 20000
 };
 
-// Simple piece-square tables (white perspective; mirrored for black)
-// Encourage center control and development — enough to feel like a real
-// opponent without needing a full opening book.
+// Piece-square tables, white's perspective (row 0 = rank 8). Mirrored for
+// black by flipping the row index. Every piece type now has one — this is
+// what gives the AI an actual reason to develop pieces toward the center
+// instead of treating every square as equally good.
+// prettier-ignore
 const PAWN_TABLE = [
-  0, 0, 0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50, 50, 50, 50, 10, 10, 20, 30, 30,
-  20, 10, 10, 5, 5, 10, 25, 25, 10, 5, 5, 0, 0, 0, 20, 20, 0, 0, 0, 5, -5, -10,
-  0, 0, -10, -5, 5, 5, 10, 10, -20, -20, 10, 10, 5, 0, 0, 0, 0, 0, 0, 0, 0
+  0,  0,  0,  0,  0,  0,  0,  0,
+  50, 50, 50, 50, 50, 50, 50, 50,
+  10, 10, 20, 30, 30, 20, 10, 10,
+  5,  5, 10, 25, 25, 10,  5,  5,
+  0,  0,  0, 20, 20,  0,  0,  0,
+  5, -5,-10,  0,  0,-10, -5,  5,
+  5, 10, 10,-20,-20, 10, 10,  5,
+  0,  0,  0,  0,  0,  0,  0,  0
 ];
+// prettier-ignore
+const KNIGHT_TABLE = [
+  -50,-40,-30,-30,-30,-30,-40,-50,
+  -40,-20,  0,  0,  0,  0,-20,-40,
+  -30,  0, 10, 15, 15, 10,  0,-30,
+  -30,  5, 15, 20, 20, 15,  5,-30,
+  -30,  0, 15, 20, 20, 15,  0,-30,
+  -30,  5, 10, 15, 15, 10,  5,-30,
+  -40,-20,  0,  5,  5,  0,-20,-40,
+  -50,-40,-30,-30,-30,-30,-40,-50
+];
+// prettier-ignore
+const BISHOP_TABLE = [
+  -20,-10,-10,-10,-10,-10,-10,-20,
+  -10,  0,  0,  0,  0,  0,  0,-10,
+  -10,  0,  5, 10, 10,  5,  0,-10,
+  -10,  5,  5, 10, 10,  5,  5,-10,
+  -10,  0, 10, 10, 10, 10,  0,-10,
+  -10, 10, 10, 10, 10, 10, 10,-10,
+  -10,  5,  0,  0,  0,  0,  5,-10,
+  -20,-10,-10,-10,-10,-10,-10,-20
+];
+// prettier-ignore
+const ROOK_TABLE = [
+  0,  0,  0,  0,  0,  0,  0,  0,
+  5, 10, 10, 10, 10, 10, 10,  5,
+  -5,  0,  0,  0,  0,  0,  0, -5,
+  -5,  0,  0,  0,  0,  0,  0, -5,
+  -5,  0,  0,  0,  0,  0,  0, -5,
+  -5,  0,  0,  0,  0,  0,  0, -5,
+  -5,  0,  0,  0,  0,  0,  0, -5,
+  0,  0,  0,  5,  5,  0,  0,  0
+];
+// prettier-ignore
+const QUEEN_TABLE = [
+  -20,-10,-10, -5, -5,-10,-10,-20,
+  -10,  0,  0,  0,  0,  0,  0,-10,
+  -10,  0,  5,  5,  5,  5,  0,-10,
+  -5,  0,  5,  5,  5,  5,  0, -5,
+  0,  0,  5,  5,  5,  5,  0, -5,
+  -10,  5,  5,  5,  5,  5,  0,-10,
+  -10,  0,  5,  0,  0,  0,  0,-10,
+  -20,-10,-10, -5, -5,-10,-10,-20
+];
+// prettier-ignore
+const KING_TABLE = [
+  -30,-40,-40,-50,-50,-40,-40,-30,
+  -30,-40,-40,-50,-50,-40,-40,-30,
+  -30,-40,-40,-50,-50,-40,-40,-30,
+  -30,-40,-40,-50,-50,-40,-40,-30,
+  -20,-30,-30,-40,-40,-30,-30,-20,
+  -10,-20,-20,-20,-20,-20,-20,-10,
+  20, 20,  0,  0,  0,  0, 20, 20,
+  20, 30, 10,  0,  0, 10, 30, 20
+];
+
+const TABLES: Record<string, number[]> = {
+  p: PAWN_TABLE,
+  n: KNIGHT_TABLE,
+  b: BISHOP_TABLE,
+  r: ROOK_TABLE,
+  q: QUEEN_TABLE,
+  k: KING_TABLE
+};
 
 export function evaluateBoard(chess: Chess): number {
   const board = chess.board();
@@ -48,16 +129,30 @@ export function evaluateBoard(chess: Chess): number {
       const piece = board[r][f];
       if (!piece) continue;
       const value = PIECE_VALUES[piece.type];
-      let positional = 0;
-      if (piece.type === 'p') {
-        const idx = piece.color === 'w' ? r * 8 + f : (7 - r) * 8 + f;
-        positional = PAWN_TABLE[idx] ?? 0;
-      }
+      const table = TABLES[piece.type];
+      const idx = piece.color === 'w' ? r * 8 + f : (7 - r) * 8 + f;
+      const positional = table?.[idx] ?? 0;
       const total = value + positional;
       score += piece.color === 'w' ? total : -total;
     }
   }
   return score;
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+/** The position part of a FEN only — ignores move-clock fields, so a
+ * repeated board position is recognized as a repeat even if the clocks
+ * printed alongside it differ. */
+function positionKey(fen: string): string {
+  return fen.split(' ').slice(0, 4).join(' ');
 }
 
 function minimax(
@@ -97,12 +192,6 @@ function minimax(
 }
 
 /**
- * Picks the best move for the side to move, at the given difficulty.
- * Beginner adds randomized noise so it doesn't play perfectly, which
- * feels more human and is honestly represented as "Beginner" rather
- * than claiming engine-grade strength.
- */
-/**
  * Simple heuristic for whether the computer opponent accepts a draw offer:
  * it declines only when it holds a clear material/positional edge (roughly
  * more than a minor piece's worth), and accepts otherwise. This is an
@@ -117,23 +206,50 @@ export function shouldComputerAcceptDraw(fen: string, computerColor: 'w' | 'b'):
   return computerAdvantage < 150;
 }
 
-export function pickComputerMove(fen: string, difficulty: Difficulty): Move | null {
+/**
+ * Picks the best move for the side to move, at the given difficulty.
+ *
+ * `recentPositions` is the list of position keys (see positionKey above)
+ * already seen earlier in THIS game — passed in from the caller's move
+ * history. Any candidate move that would recreate one of those positions
+ * is penalized, so the AI stops treating "shuffle back to where I just
+ * was" as equally good as making progress. Beginner also adds randomized
+ * noise so it doesn't play perfectly, which feels more human and is
+ * honestly represented as "Beginner" rather than claiming engine-grade
+ * strength.
+ */
+export function pickComputerMove(
+  fen: string,
+  difficulty: Difficulty,
+  recentPositions: string[] = []
+): Move | null {
   const chess = new Chess(fen);
   const depth = DEPTH_BY_DIFFICULTY[difficulty];
-  const moves = chess.moves({ verbose: true });
+  const moves = shuffle(chess.moves({ verbose: true }));
   if (moves.length === 0) return null;
 
   const maximizing = chess.turn() === 'w';
+  const seen = new Set(recentPositions);
+
   let bestMove: Move = moves[0];
   let bestScore = maximizing ? -Infinity : Infinity;
 
   for (const m of moves) {
     chess.move(m.san);
     let score = minimax(chess, depth - 1, -Infinity, Infinity, !maximizing);
+
+    if (seen.has(positionKey(chess.fen()))) {
+      // Discourage recreating a position already visited this game —
+      // this is what stops the AI from shuffling one piece back and forth.
+      score += maximizing ? -120 : 120;
+    }
+
     chess.undo();
 
     if (difficulty === 'beginner') {
       score += (Math.random() - 0.5) * 150;
+    } else if (difficulty === 'club') {
+      score += (Math.random() - 0.5) * 40;
     }
 
     if (maximizing ? score > bestScore : score < bestScore) {
@@ -144,3 +260,5 @@ export function pickComputerMove(fen: string, difficulty: Difficulty): Move | nu
 
   return bestMove;
 }
+
+export { positionKey };

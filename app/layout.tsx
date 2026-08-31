@@ -40,9 +40,30 @@ export const viewport: Viewport = {
   initialScale: 1
 };
 
+const THEME_INIT_SCRIPT = `
+(function () {
+  try {
+    var stored = localStorage.getItem('royal64:theme');
+    var resolved = 'dark';
+    if (stored === 'light' || stored === 'dark') {
+      resolved = stored;
+    } else if (stored === 'system' || !stored) {
+      resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.dataset.theme = resolved;
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" data-theme="dark" className={`${display.variable} ${body.variable} ${mono.variable}`}>
+      <head>
+        {/* Applies the saved theme before paint so there's no flash of the
+            wrong theme on reload — this runs synchronously, ahead of React
+            hydration and ahead of ThemeSelector's own effect. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="font-body">
         {children}
         <ToastViewport />

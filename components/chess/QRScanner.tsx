@@ -14,7 +14,7 @@ type ScanState = 'idle' | 'requesting' | 'scanning' | 'found' | 'denied' | 'unsu
 function extractRoomPath(text: string): string | null {
   const trimmed = text.trim();
 
-  // Case 1: the QR encodes a full or relative URL, e.g. https://host/game/R64-ABCDE?seat=b
+  // Case 1: the QR encodes a full or relative URL, e.g. https://host/game/R64-ABCDE?seat=b&time=10
   try {
     const url = new URL(trimmed, window.location.origin);
     const parts = url.pathname.split('/').filter(Boolean);
@@ -29,10 +29,12 @@ function extractRoomPath(text: string): string | null {
     // Not a URL — fall through to raw-ID handling below.
   }
 
-  // Case 2: the QR (or pasted text) is just the raw Game ID itself.
+  // Case 2: the QR (or pasted text) is just the raw Game ID itself. Color
+  // and time control aren't known here — the host's approval message
+  // resolves both once we're let in (see OnlineGame.tsx resolvedRole).
   const rawCandidate = trimmed.toUpperCase();
   if (isValidGameId(rawCandidate)) {
-    return `/game/${rawCandidate}?seat=b`;
+    return `/game/${rawCandidate}`;
   }
 
   return null;
