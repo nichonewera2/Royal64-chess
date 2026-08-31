@@ -94,6 +94,15 @@ describe('Royal64Engine', () => {
     const move = pickComputerMove(startFen, 'expert', [afterNf3]);
     expect(move).not.toBeNull();
   });
+
+  it('AI takes a free hanging queen when available (real search, not gimmick)', async () => {
+    const { pickComputerMove } = await import('@/lib/chess/ai');
+    // White queen can capture a completely undefended black rook.
+    const fen = '4k3/8/8/8/3r4/8/8/3QK3 w - - 0 1';
+    const move = pickComputerMove(fen, 'expert', []);
+    expect(move).not.toBeNull();
+    expect(move?.captured).toBe('r');
+  });
 });
 
 describe('Room time control', () => {

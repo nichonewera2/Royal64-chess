@@ -28,16 +28,22 @@ export function HostLobby({
   onAccept,
   onDecline
 }: HostLobbyProps) {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<'code' | 'link' | null>(null);
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://royal64.app';
   const joinerSeat: 'w' | 'b' = hostSeat === 'w' ? 'b' : 'w';
   const joinUrl = buildJoinUrl(gameId, origin, joinerSeat, timeControlMs);
   const timeLabel = timeControlMs === null ? 'Tanpa batas waktu' : `${Math.round(timeControlMs / 60000)} menit per pemain`;
 
-  async function handleCopy() {
+  async function handleCopyCode() {
+    await navigator.clipboard.writeText(gameId);
+    setCopied('code');
+    setTimeout(() => setCopied(null), 1800);
+  }
+
+  async function handleCopyLink() {
     await navigator.clipboard.writeText(joinUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
+    setCopied('link');
+    setTimeout(() => setCopied(null), 1800);
   }
 
   async function handleShare() {
@@ -53,7 +59,7 @@ export function HostLobby({
         // dibatalkan pengguna — lanjut ke fallback salin link
       }
     }
-    handleCopy();
+    handleCopyLink();
   }
 
   return (
@@ -79,8 +85,8 @@ export function HostLobby({
 
       <div className="w-full bg-espresso-900 border border-walnut-700 rounded-lg px-4 py-3 flex items-center justify-between">
         <span className="font-mono text-gold-400 text-xl tracking-widest">{gameId}</span>
-        <button onClick={handleCopy} aria-label="Salin kode" className="text-parchment-200 hover:text-gold-400">
-          {copied ? <Check size={18} /> : <Copy size={18} />}
+        <button onClick={handleCopyCode} aria-label="Salin kode" className="text-parchment-200 hover:text-gold-400">
+          {copied === 'code' ? <Check size={18} /> : <Copy size={18} />}
         </button>
       </div>
 
@@ -90,6 +96,9 @@ export function HostLobby({
       >
         <Share2 size={16} /> Bagikan Undangan
       </button>
+      {copied === 'link' && (
+        <p className="text-emerald-400 text-xs -mt-3">Tautan undangan disalin.</p>
+      )}
 
       <AnimatePresence mode="wait">
         {pendingRequests.length === 0 ? (

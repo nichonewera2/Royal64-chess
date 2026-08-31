@@ -30,6 +30,12 @@ rather than faked:
 | Spectator mode | **Fully real** — enter any Game ID with "Tonton Pertandingan" to join the room's channel read-only (no move rights, chat still works) |
 | Move/capture/check/game-end sounds | **Synthesized at runtime** with the Web Audio API (see honesty note below) — not recorded audio samples |
 | Custom fonts (Leander for names, Wood Chaos for titles) | **Fully real**, self-hosted via `@font-face` in `app/fonts.css` — see font licensing note below |
+| Room setup (choose color + time control before creating a room) | **Fully real** — host picks White/Black/Random and a time control in `RoomSetup`; the joiner's color/time are confirmed authoritatively by the host at approval time, so it's correct even if someone joins by typing a bare Game ID instead of using the share link |
+| Waiting-room / approval flow | **Fully real** — host sees incoming join requests with Terima/Tolak; both screens flip to the board on the same `join-approved` broadcast |
+| App/PWA icon | Generated from the user-supplied crest image (`icon-192.png`, `icon-512.png`, `icon-maskable.png`, `favicon.ico`) |
+
+**Removed:** the earlier light/dark theme toggle was taken out entirely —
+it's fixed to one dark vintage-wood theme now.
 
 ### Sound effects — honesty note
 

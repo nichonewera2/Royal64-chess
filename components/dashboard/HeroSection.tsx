@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Crown, Cpu, ChevronDown } from 'lucide-react';
+import { Cpu, ChevronDown } from 'lucide-react';
 import { InstallButton } from '@/components/pwa/InstallButton';
 
 export function HeroSection() {
@@ -28,9 +28,9 @@ export function HeroSection() {
           initial={{ opacity: 0, y: -8, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 18 }}
-          className="w-20 h-20 rounded-full border-2 border-gold-500 flex items-center justify-center shadow-[0_0_40px_-6px_rgba(240,168,60,0.5)]"
+          className="w-24 h-24 rounded-full overflow-hidden shadow-[0_0_50px_-8px_rgba(240,168,60,0.6)]"
         >
-          <Crown className="text-gold-400" size={36} />
+          <img src="/icons/icon-512.png" alt="Lambang Royal64" className="w-full h-full object-cover" />
         </motion.div>
 
         <motion.h1
