@@ -31,7 +31,12 @@ export function ComputerGame() {
 
   useEffect(() => {
     if (engine.turn !== 'b') return;
-    if (status === 'checkmate' || status === 'stalemate') return;
+    // Any non-"in_progress"/"check" status means the game has ended —
+    // via checkmate/stalemate/draw as chess.js sees it, or via resign/
+    // draw-agreement/timeout which are store-level statuses chess.js has
+    // no concept of. Without covering all of them here, the computer
+    // could still make a move right after the human resigned.
+    if (status !== 'in_progress' && status !== 'check') return;
 
     let cancelled = false;
     setThinking(true);

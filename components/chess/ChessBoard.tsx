@@ -71,7 +71,16 @@ export function ChessBoard({
   const rows = orientation === 'white' ? board : [...board].reverse();
 
   function handleSelect(square: Square) {
-    if (locked) return;
+    // The board must lock itself the instant the game ends for ANY reason
+    // — checkmate/stalemate are naturally enforced by chess.js having no
+    // legal moves left, but resignation, a draw agreement, and timeout are
+    // store-level statuses chess.js knows nothing about. Without this
+    // check here, the underlying position still has perfectly legal moves
+    // available, so clicking would keep playing right through a
+    // resignation. This check is centralized in the board itself — not
+    // left to each caller's `locked` prop — so no game mode can forget it.
+    const isGameOver = status !== 'in_progress' && status !== 'check';
+    if (locked || isGameOver) return;
 
     if (selectedSquare && legalTargets.includes(square)) {
       const isPromotion =

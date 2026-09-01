@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Eye } from 'lucide-react';
+import { ArrowLeft, Eye, Lock } from 'lucide-react';
 import { isValidGameId, parseTimeControlParam } from '@/lib/chess/gameId';
 import { OnlineGame, type SeatRole } from '@/components/chess/OnlineGame';
 import { usePlayerStore } from '@/lib/store/playerStore';
@@ -15,6 +15,7 @@ export default function GameRoomPage() {
   const router = useRouter();
   const push = useToastStore((s) => s.push);
   const { name, playerId, hydrated, hydrate } = usePlayerStore();
+  const [activeMatch, setActiveMatch] = useState(false);
 
   const gameId = decodeURIComponent(params.gameId ?? '').toUpperCase();
   const valid = isValidGameId(gameId);
@@ -37,6 +38,14 @@ export default function GameRoomPage() {
       push('Ruang permainan tidak ditemukan.', 'error');
     }
   }, [valid, push]);
+
+  function handleBack() {
+    if (activeMatch) {
+      push('Tidak bisa kembali ke halaman utama. Silakan menyerah dulu untuk kembali.', 'error');
+      return;
+    }
+    router.push('/game');
+  }
 
   if (!valid) {
     return (
@@ -64,14 +73,27 @@ export default function GameRoomPage() {
     <main className="min-h-screen bg-espresso-950 px-6 py-8">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => router.push('/game')} className="text-parchment-300/70 hover:text-gold-400">
-            <ArrowLeft size={20} />
+          <button
+            onClick={handleBack}
+            aria-label={activeMatch ? 'Menyerah dulu untuk kembali' : 'Kembali'}
+            className={
+              activeMatch
+                ? 'text-parchment-300/40 cursor-not-allowed'
+                : 'text-parchment-300/70 hover:text-gold-400'
+            }
+          >
+            {activeMatch ? <Lock size={18} /> : <ArrowLeft size={20} />}
           </button>
           <h1 className="font-display text-2xl text-parchment-100 flex items-center gap-2">
             Ruang <span className="text-gold-400 font-mono">{gameId}</span>
             {role === 'spectator' && <Eye size={18} className="text-gold-400" />}
           </h1>
         </div>
+        {activeMatch && (
+          <p className="text-xs text-parchment-300/50 -mt-4 mb-5">
+            Pertandingan sedang berlangsung — menyerah dulu untuk kembali ke halaman utama.
+          </p>
+        )}
         <OnlineGame
           gameId={gameId}
           playerId={playerId}
@@ -79,6 +101,7 @@ export default function GameRoomPage() {
           role={role}
           isHost={isHost}
           timeControlMs={timeControlMs}
+          onActiveMatchChange={setActiveMatch}
         />
       </div>
     </main>

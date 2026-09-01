@@ -27,6 +27,12 @@ interface OnlineGameProps {
   isHost: boolean;
   /** Starting time per side in ms, or null for no time limit. */
   timeControlMs: number | null;
+  /**
+   * Called whenever "leaving would abandon an active match" becomes true
+   * or false — the room page uses this to block its back button and warn
+   * on tab-close instead of silently navigating away mid-game.
+   */
+  onActiveMatchChange?: (active: boolean) => void;
 }
 
 const STATUS_COPY: Record<RealtimeStatus, { label: string; tone: string }> = {
@@ -42,8 +48,24 @@ const STATUS_COPY: Record<RealtimeStatus, { label: string; tone: string }> = {
 const DEFAULT_WHITE_NAME = 'Menunggu Putih…';
 const DEFAULT_BLACK_NAME = 'Menunggu Hitam…';
 
-export function OnlineGame({ gameId, playerId, playerName, role, isHost, timeControlMs }: OnlineGameProps) {
-  const { resetGame, playMove, engine, resign, offerDraw, respondDraw } = useGameStore();
+export function OnlineGame({
+  gameId,
+  playerId,
+  playerName,
+  role,
+  isHost,
+  timeControlMs,
+  onActiveMatchChange
+}: OnlineGameProps) {
+  const {
+    resetGame,
+    playMove,
+    engine,
+    resign,
+    offerDraw,
+    respondDraw,
+    status: gameStatus
+  } = useGameStore();
   const [status, setStatus] = useState<RealtimeStatus>('connecting');
   const [whiteName, setWhiteName] = useState(role === 'w' ? playerName : DEFAULT_WHITE_NAME);
   const [blackName, setBlackName] = useState(role === 'b' ? playerName : DEFAULT_BLACK_NAME);
@@ -91,6 +113,27 @@ export function OnlineGame({ gameId, playerId, playerName, role, isHost, timeCon
   >([]);
   const [joinStatus, setJoinStatus] = useState<'waiting' | 'declined'>('waiting');
   const hasSentJoinRequest = useRef(false);
+
+  // Reports "leaving now would abandon a live match" to the parent page,
+  // which uses it to block the back button — a resign/draw/checkmate/
+  // timeout ends the match cleanly, so leaving is fine again right after.
+  // Also warns on tab-close/refresh via the browser's own native prompt
+  // (custom text isn't possible for beforeunload in modern browsers, but
+  // the native "leave site?" confirmation is a real, working safeguard).
+  useEffect(() => {
+    const isPlayerNow = resolvedRole === 'w' || resolvedRole === 'b';
+    const isActiveMatch =
+      gameStarted && isPlayerNow && (gameStatus === 'in_progress' || gameStatus === 'check');
+    onActiveMatchChange?.(isActiveMatch);
+
+    if (!isActiveMatch) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [gameStarted, resolvedRole, gameStatus, onActiveMatchChange]);
 
   useEffect(() => {
     resetGame('online', timeControlMs);
