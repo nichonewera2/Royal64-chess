@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <radialGradient id="bgB" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#2a1d12"/>
+      <stop offset="100%" stop-color="#150d06"/>
+    </radialGradient>
+  </defs>
+  <rect width="200" height="200" rx="20" fill="url(#bgB)"/>
+
+  <!-- Two king glyphs facing each other -->
+  <text x="55" y="120" font-size="46" fill="#f6e9cf" text-anchor="middle" font-family="serif">&#9812;</text>
+  <text x="145" y="120" font-size="46" fill="#150d06" text-anchor="middle" font-family="serif" stroke="#e3c691" stroke-width="1.2">&#9818;</text>
+
+  <!-- Pulsing connection rings between them -->
+  <g stroke="#f0a83c" fill="none" stroke-width="3">
+    <circle cx="100" cy="100" r="10" opacity="0">
+      <animate attributeName="r" values="6;46" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.9;0" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="100" cy="100" r="10" opacity="0">
+      <animate attributeName="r" values="6;46" dur="2s" begin="1s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.9;0" dur="2s" begin="1s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  <circle cx="100" cy="100" r="5" fill="#ffe3ab"/>
+
+  <rect x="65" y="160" width="70" height="8" rx="4" fill="#f0a83c" opacity="0.35"/>
+</svg>

@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" width="1200" height="320">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1f150d"/>
+      <stop offset="55%" stop-color="#150d06"/>
+      <stop offset="100%" stop-color="#0f0a06"/>
+    </linearGradient>
+    <pattern id="checker" width="60" height="60" patternUnits="userSpaceOnUse" patternTransform="rotate(6)">
+      <rect width="60" height="60" fill="none"/>
+      <rect width="30" height="30" fill="#f0a83c" opacity="0.05"/>
+      <rect x="30" y="30" width="30" height="30" fill="#f0a83c" opacity="0.05"/>
+    </pattern>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f0a83c" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#f0a83c" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="shimmer" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f0a83c" stop-opacity="0"/>
+      <stop offset="45%" stop-color="#ffe3ab" stop-opacity="0.9"/>
+      <stop offset="55%" stop-color="#ffe3ab" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#f0a83c" stop-opacity="0"/>
+      <animateTransform attributeName="gradientTransform" type="translate"
+        from="-1200 0" to="1200 0" dur="3.2s" repeatCount="indefinite"/>
+    </linearGradient>
+    <mask id="titleMask">
+      <text x="600" y="168" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+        font-size="96" font-weight="700" fill="#ffffff" letter-spacing="4">ROYAL64</text>
+    </mask>
+  </defs>
+
+  <rect width="1200" height="320" fill="url(#bg)"/>
+  <rect width="1200" height="320" fill="url(#checker)"/>
+  <circle cx="600" cy="95" r="150" fill="url(#glow)">
+    <animate attributeName="r" values="140;165;140" dur="3.4s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Crown emblem -->
+  <g transform="translate(600,90)">
+    <circle r="42" fill="none" stroke="#f0a83c" stroke-width="3">
+      <animate attributeName="stroke-opacity" values="0.6;1;0.6" dur="2.6s" repeatCount="indefinite"/>
+    </circle>
+    <path d="M -22 14 L -18 -12 L -8 4 L 0 -18 L 8 4 L 18 -12 L 22 14 Z"
+      fill="#f0a83c">
+      <animateTransform attributeName="transform" type="translate" values="0 0;0 -3;0 0" dur="2.6s" repeatCount="indefinite"/>
+    </path>
+    <rect x="-22" y="16" width="44" height="6" rx="2" fill="#f0a83c"/>
+  </g>
+
+  <!-- Title with shimmer sweep -->
+  <text x="600" y="168" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+    font-size="96" font-weight="700" fill="#f0a83c" letter-spacing="4">ROYAL64</text>
+  <rect x="0" y="80" width="1200" height="110" fill="url(#shimmer)" mask="url(#titleMask)"/>
+
+  <!-- Tagline -->
+  <text x="600" y="215" text-anchor="middle" font-family="Georgia, serif" font-style="italic"
+    font-size="27" fill="#e3c691">Setiap Langkah Menjadi Sejarah.</text>
+
+  <!-- Bottom accent line -->
+  <rect x="440" y="245" width="320" height="2" fill="#f0a83c" opacity="0.4"/>
+  <text x="600" y="278" text-anchor="middle" font-family="Georgia, serif" font-size="15"
+    letter-spacing="3" fill="#a3874f">CATUR VINTAGE &#183; REAL-TIME &#183; AI</text>
+</svg>

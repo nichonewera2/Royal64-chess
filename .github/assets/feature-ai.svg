@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <radialGradient id="bgA" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#2a1d12"/>
+      <stop offset="100%" stop-color="#150d06"/>
+    </radialGradient>
+  </defs>
+  <rect width="200" height="200" rx="20" fill="url(#bgA)"/>
+  <!-- Knight silhouette -->
+  <g transform="translate(100,88)" fill="#f0a83c">
+    <path d="M -26 46 L -22 6 C -22 -6 -14 -20 2 -28 L 14 -40 C 18 -44 26 -42 26 -34
+      L 22 -20 C 30 -18 36 -10 36 0 L 40 46 Z" />
+    <circle cx="10" cy="-18" r="3" fill="#150d06"/>
+  </g>
+  <rect x="60" y="150" width="80" height="8" rx="4" fill="#f0a83c" opacity="0.35"/>
+  <!-- Thinking dots -->
+  <g fill="#ffe3ab">
+    <circle cx="76" cy="176" r="6">
+      <animate attributeName="opacity" values="0.25;1;0.25" dur="1.2s" begin="0s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="100" cy="176" r="6">
+      <animate attributeName="opacity" values="0.25;1;0.25" dur="1.2s" begin="0.2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="124" cy="176" r="6">
+      <animate attributeName="opacity" values="0.25;1;0.25" dur="1.2s" begin="0.4s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+</svg>

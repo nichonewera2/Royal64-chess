@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <radialGradient id="bgC" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#2a1d12"/>
+      <stop offset="100%" stop-color="#150d06"/>
+    </radialGradient>
+  </defs>
+  <rect width="200" height="200" rx="20" fill="url(#bgC)"/>
+
+  <!-- checkerboard 3x3 -->
+  <g transform="translate(52,52)">
+    <rect width="96" height="96" fill="#e3c691" opacity="0.15"/>
+    <rect x="0" y="0" width="32" height="32" fill="#f0a83c" opacity="0.25"/>
+    <rect x="64" y="0" width="32" height="32" fill="#f0a83c" opacity="0.25"/>
+    <rect x="32" y="32" width="32" height="32" fill="#f0a83c" opacity="0.25"/>
+    <rect x="0" y="64" width="32" height="32" fill="#f0a83c" opacity="0.25"/>
+    <rect x="64" y="64" width="32" height="32" fill="#f0a83c" opacity="0.25"/>
+  </g>
+
+  <!-- The missing puzzle piece drops and snaps into the center square -->
+  <g>
+    <rect x="84" y="84" width="32" height="32" rx="4" fill="#ffe3ab">
+      <animate attributeName="y" values="20;84;84;84" dur="2.4s" repeatCount="indefinite" keyTimes="0;0.4;0.5;1"/>
+      <animate attributeName="opacity" values="0;1;1;1" dur="2.4s" repeatCount="indefinite" keyTimes="0;0.4;0.5;1"/>
+    </rect>
+  </g>
+
+  <text x="100" y="172" font-size="18" fill="#f0a83c" text-anchor="middle" font-family="Georgia, serif">&#9818; Mat</text>
+</svg>

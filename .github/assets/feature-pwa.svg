@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <radialGradient id="bgD" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#2a1d12"/>
+      <stop offset="100%" stop-color="#150d06"/>
+    </radialGradient>
+  </defs>
+  <rect width="200" height="200" rx="20" fill="url(#bgD)"/>
+
+  <!-- Phone outline -->
+  <rect x="70" y="40" width="60" height="110" rx="10" fill="none" stroke="#e3c691" stroke-width="4"/>
+  <rect x="90" y="145" width="20" height="4" rx="2" fill="#e3c691"/>
+
+  <!-- App icon dropping into the phone -->
+  <g>
+    <rect x="80" y="0" width="40" height="40" rx="9" fill="#f0a83c">
+      <animate attributeName="y" values="0;68;68" dur="2.2s" repeatCount="indefinite" keyTimes="0;0.5;1"/>
+    </rect>
+    <path d="M 92 12 L 96 8 L 100 12 M 96 8 L 96 24" fill="none" stroke="#150d06" stroke-width="2.4"
+      stroke-linecap="round" stroke-linejoin="round" transform="translate(4,0)">
+      <animate attributeName="y" values="0;68;68" dur="2.2s" repeatCount="indefinite" keyTimes="0;0.5;1"/>
+    </path>
+  </g>
+
+  <!-- Ripple confirming install -->
+  <circle cx="100" cy="95" r="6" fill="none" stroke="#ffe3ab" stroke-width="2" opacity="0">
+    <animate attributeName="r" values="6;34" dur="1.2s" begin="1.1s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.8;0" dur="1.2s" begin="1.1s" repeatCount="indefinite"/>
+  </circle>
+</svg>

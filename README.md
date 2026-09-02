@@ -1,199 +1,311 @@
-# ♜ Royal64
+<div align="center">
 
-**Where Every Move Becomes History.**
+<img src=".github/assets/banner.svg" alt="Royal64 banner" width="100%" />
 
+<br/>
+
+![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Tailwind](https://img.shields.io/badge/Tailwind_CSS-3.4-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white)
+![chess.js](https://img.shields.io/badge/chess.js-1.0-8A3820?style=flat-square)
+![PWA](https://img.shields.io/badge/PWA-ready-F0A83C?style=flat-square)
+![License](https://img.shields.io/badge/status-actively--built-9A7530?style=flat-square)
+
+**Klub catur vintage kayu dengan AI sungguhan, multiplayer real-time, dan mode penonton.**
 Developer: **Nicholas.ofc**
 
-A premium, classic-chocolate-themed chess platform — play a friend in real
-time, challenge the Royal64 AI, or pass-and-play locally. Built with
-Next.js, TypeScript, Tailwind CSS, and chess.js.
+</div>
 
 ---
 
-## What's real vs. what's an honest stub
+<div align="center">
+  <img src=".github/assets/board-demo.svg" alt="Animated knight hopping across the Royal64 board" width="320" />
+</div>
 
-This project is built to run and to be genuinely playable end-to-end, but
-two pieces are intentionally left as clearly-labeled, swappable seams
-rather than faked:
+<br/>
 
-| Feature | Status |
+Royal64 adalah platform catur premium bertema kayu tua klasik — main lawan
+teman secara real-time, tantang Royal64 AI, atau tonton pertandingan orang
+lain. Dibangun dengan Next.js, TypeScript, Tailwind CSS, dan chess.js.
+**Seluruh antarmuka aplikasi berbahasa Indonesia.**
+
+## Daftar Isi
+
+- [Fitur Unggulan](#fitur-unggulan)
+- [Apa yang Nyata vs. Apa yang Jujur Masih Placeholder](#apa-yang-nyata-vs-apa-yang-jujur-masih-placeholder)
+- [Mulai Cepat](#mulai-cepat)
+- [Environment Variables](#environment-variables)
+- [Deploy ke Vercel](#deploy-ke-vercel)
+- [Struktur Proyek](#struktur-proyek)
+- [Catatan Keamanan](#catatan-keamanan)
+- [Dukungan Browser](#dukungan-browser)
+- [Troubleshooting](#troubleshooting)
+
+---
+
+## Fitur Unggulan
+
+<table>
+<tr>
+<td align="center" width="25%">
+  <img src=".github/assets/feature-ai.svg" width="120" alt="AI animation"/>
+  <br/><b>Royal64 AI</b>
+  <br/><sub>Minimax + alpha-beta sungguhan, 3 tingkat kesulitan</sub>
+</td>
+<td align="center" width="25%">
+  <img src=".github/assets/feature-realtime.svg" width="120" alt="Realtime animation"/>
+  <br/><b>Multiplayer Real-time</b>
+  <br/><sub>Room, QR code, ruang tunggu dengan persetujuan host</sub>
+</td>
+<td align="center" width="25%">
+  <img src=".github/assets/feature-puzzle.svg" width="120" alt="Puzzle animation"/>
+  <br/><b>Mode Puzzle</b>
+  <br/><sub>Posisi taktik yang diverifikasi manual, bukan asal comot</sub>
+</td>
+<td align="center" width="25%">
+  <img src=".github/assets/feature-pwa.svg" width="120" alt="PWA animation"/>
+  <br/><b>Progressive Web App</b>
+  <br/><sub>Bisa dipasang ke layar utama, jalan offline sebagian</sub>
+</td>
+</tr>
+</table>
+
+Fitur lain: pilih warna bidak & batas waktu sebelum membuat ruang, obrolan
+dalam pertandingan, mode penonton, nameplate dengan font kustom, efek suara
+sintesis untuk tiap jenis langkah, dan sistem menyerah/tawaran seri yang
+benar-benar berfungsi dua arah.
+
+---
+
+## Apa yang Nyata vs. Apa yang Jujur Masih Placeholder
+
+Proyek ini dibangun untuk benar-benar bisa dimainkan dari ujung ke ujung,
+tapi beberapa bagian sengaja dibiarkan sebagai *seam* yang jujur diberi
+label dan mudah diganti, bukan dipalsukan:
+
+| Fitur | Status |
 |---|---|
-| Chess rules (check, checkmate, castling, en passant, promotion, draws) | **Fully real**, via `chess.js` |
-| Computer opponent | **Real minimax/alpha-beta search** with material + positional evaluation, three difficulty levels. Labeled "Royal64 AI" — it is *not* Stockfish. See `lib/chess/computer.ts` for the `ComputerOpponent` interface if you want to drop in a real Stockfish WASM worker later. |
-| Local 2-player | **Fully real** |
-| Multiplayer rooms, Game ID, QR code, share | **Fully real** — IDs are generated dynamically, QR encodes a real join URL, share uses the Web Share API with clipboard fallback |
-| Realtime move sync | **Real Supabase Realtime implementation**, active the moment you set `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Without those, the app **honestly shows "not configured"** instead of faking sync — see `lib/realtime/provider.ts` |
-| PWA (manifest, service worker, install prompt) | **Fully real** — uses the real `beforeinstallprompt` event, not a fake button |
-| Player name (first-visit prompt + rename) | **Fully real**, persisted to `localStorage` per browser |
-| Names shown on the board (nameplates) | **Fully real** — exchanged live between players over the same realtime channel as moves |
-| In-match chat | **Fully real** — real-time broadcast over the same Supabase channel as moves, styled as a wood-toned "meja bincang" panel |
-| Spectator mode | **Fully real** — enter any Game ID with "Tonton Pertandingan" to join the room's channel read-only (no move rights, chat still works) |
-| Move/capture/check/game-end sounds | **Synthesized at runtime** with the Web Audio API (see honesty note below) — not recorded audio samples |
-| Custom fonts (Leander for names, Wood Chaos for titles) | **Fully real**, self-hosted via `@font-face` in `app/fonts.css` — see font licensing note below |
-| Room setup (choose color + time control before creating a room) | **Fully real** — host picks White/Black/Random and a time control in `RoomSetup`; the joiner's color/time are confirmed authoritatively by the host at approval time, so it's correct even if someone joins by typing a bare Game ID instead of using the share link |
-| Waiting-room / approval flow | **Fully real** — host sees incoming join requests with Terima/Tolak; both screens flip to the board on the same `join-approved` broadcast |
-| App/PWA icon | Generated from the user-supplied crest image (`icon-192.png`, `icon-512.png`, `icon-maskable.png`, `favicon.ico`) |
+| Aturan catur (skak, skakmat, rokade, en passant, promosi, seri) | **Sepenuhnya nyata**, via `chess.js` |
+| Lawan komputer | **Pencarian minimax/alpha-beta sungguhan** dengan evaluasi materi + posisi + move ordering, 3 tingkat kesulitan yang genuinely berbeda kekuatan (bukan sekadar noise acak). Diberi label "Royal64 AI" — bukan Stockfish. Lihat `lib/chess/computer.ts` untuk interface `ComputerOpponent` kalau mau pasang Stockfish WASM asli nanti. |
+| Lokal 2 pemain | **Sepenuhnya nyata** |
+| Room multiplayer, Game ID, kode QR, share | **Sepenuhnya nyata** — ID dibuat dinamis, QR meng-encode URL join asli, share pakai Web Share API dengan fallback salin |
+| Setup ruang (pilih warna + batas waktu sebelum buat room) | **Sepenuhnya nyata** — host pilih Putih/Hitam/Acak dan batas waktu; warna & waktu joiner dikonfirmasi otomatis oleh host saat approve, jadi tetap benar walau seseorang gabung dengan mengetik Game ID manual |
+| Ruang tunggu / alur persetujuan | **Sepenuhnya nyata** — host melihat permintaan gabung dengan tombol Ya/Tidak; kedua layar pindah ke papan pada broadcast yang sama persis |
+| Sinkronisasi langkah real-time | **Implementasi Supabase Realtime asli**, aktif begitu `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` diisi. Tanpa itu, aplikasi **jujur menampilkan "belum dikonfigurasi"**, bukan pura-pura tersambung — lihat `lib/realtime/provider.ts` |
+| PWA (manifest, service worker, install prompt) | **Sepenuhnya nyata** — pakai event `beforeinstallprompt` asli |
+| Nama pemain (wajib isi di kunjungan pertama + ganti nama) | **Sepenuhnya nyata**, tersimpan di `localStorage` per browser |
+| Nameplate di papan | **Sepenuhnya nyata** — ditukar langsung antar pemain lewat channel realtime yang sama dengan langkah |
+| Obrolan dalam pertandingan | **Sepenuhnya nyata** — broadcast real-time di channel Supabase yang sama dengan langkah |
+| Mode penonton | **Sepenuhnya nyata** — masuk Game ID mana pun lewat "Tonton Pertandingan" untuk mengikuti channel room secara read-only |
+| Menyerah & tawaran seri | **Sepenuhnya nyata dan dua arah** — broadcast ke lawan, papan otomatis terkunci begitu game berakhir dengan cara apa pun |
+| Suara langkah/makan/skak/game selesai | **Disintesis saat runtime** dengan Web Audio API (lihat catatan kejujuran di bawah) — bukan rekaman audio |
+| Font kustom (Leander untuk nama, Wood Chaos untuk judul) | **Sepenuhnya nyata**, di-hosting sendiri via `@font-face` — lihat catatan lisensi font di bawah |
+| Ikon aplikasi/PWA | Dibuat dari gambar lambang yang disediakan pengguna (`icon-192.png`, `icon-512.png`, `icon-maskable.png`, `favicon.ico`) |
 
-**Removed:** the earlier light/dark theme toggle was taken out entirely —
-it's fixed to one dark vintage-wood theme now.
+> **Dihapus:** fitur ganti tema terang/gelap yang sempat ada sudah dicabut
+> total — sekarang tetap satu tema kayu vintage gelap.
 
-### Sound effects — honesty note
+<details>
+<summary><b>Catatan kejujuran — efek suara</b></summary>
 
-`lib/audio/sfx.ts` generates short percussive tones with oscillators and a
-low-pass filter to approximate "wood on wood" chess sounds. This sandbox
-has no network access to source real recorded audio samples, so nothing
-here is a sampled chess-set sound. Swapping in real recordings later is a
-drop-in change — replace the `playTone(...)` calls in that file with
-`<audio>` playback of your own `.mp3`/`.wav` files.
+<br/>
 
-### Font licensing note
+`lib/audio/sfx.ts` menghasilkan nada perkusi pendek pakai oscillator + noise
+buffer terfilter untuk mendekati suara "kayu beradu kayu". Sandbox
+pengembangan ini tidak punya akses internet untuk mengambil sample audio
+asli, jadi tidak ada satu pun suara di sini yang berasal dari rekaman set
+catur sungguhan. Mengganti dengan rekaman asli nanti tinggal tempel —
+ganti panggilan `playTone(...)`/`playKnock(...)` di file itu dengan
+pemutaran `<audio>` file `.mp3`/`.wav` milikmu sendiri.
 
-- **Leander** (used for player names): free for personal *and* commercial
-  use, including web embedding, per its included license file.
-- **Wood Chaos** (used for titles, via Wood Chaos.otf, by Woodcutter
-  Manero): fonts from this foundry are commonly distributed as
-  **free for personal use only** — commercial use typically requires
-  contacting the foundry directly. This project embeds the font because
-  it was supplied directly for this build; if you plan to ship Royal64
-  commercially, confirm licensing terms with Woodcutter Manero first.
+</details>
+
+<details>
+<summary><b>Catatan lisensi font</b></summary>
+
+<br/>
+
+- **Leander** (dipakai untuk nama pemain): gratis untuk pemakaian personal
+  *maupun* komersial, termasuk embed web, sesuai file lisensi yang
+  disertakan.
+- **Wood Chaos** (dipakai untuk judul, oleh Woodcutter Manero): font dari
+  foundry ini umumnya didistribusikan sebagai **gratis untuk pemakaian
+  personal saja** — pemakaian komersial biasanya perlu menghubungi
+  foundry-nya langsung. Font ini di-embed di proyek karena memang
+  disediakan langsung untuk build ini; kalau berencana merilis Royal64
+  secara komersial, konfirmasi dulu lisensinya ke Woodcutter Manero.
+
+</details>
 
 ---
 
-## Getting started
+## Mulai Cepat
 
 ```bash
 npm install
 npm run dev
 ```
 
-Visit `http://localhost:3000` — it redirects to `/dashboard`.
+Buka `http://localhost:3000` — otomatis diarahkan ke `/dashboard`.
 
-### Production build
+<table>
+<tr>
+<td>
 
+**Build produksi**
 ```bash
 npm run build
 npm start
 ```
 
-### Tests
+</td>
+<td>
 
+**Menjalankan tes**
 ```bash
 npm run test
 ```
 
-Covers core chess rules: legal/illegal moves, checkmate detection,
-castling, en passant, promotion, and Game ID generation.
+</td>
+</tr>
+</table>
+
+Tes mencakup aturan catur inti (langkah legal/ilegal, deteksi skakmat,
+rokade, en passant, promosi), pembuatan Game ID, parsing batas waktu, serta
+perilaku AI (menghindari pengulangan posisi, menangkap bidak gratis).
 
 ---
 
-## Environment variables
+## Environment Variables
 
-Copy `.env.example` to `.env.local`:
+Salin `.env.example` ke `.env.local`:
 
 ```bash
 cp .env.example .env.local
 ```
 
-| Variable | Required? | Purpose |
+| Variabel | Wajib? | Kegunaan |
 |---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Optional | Enables real cross-device multiplayer sync |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Optional | Enables real cross-device multiplayer sync |
-| `NEXT_PUBLIC_APP_URL` | Optional | Used to build absolute join URLs for QR codes |
+| `NEXT_PUBLIC_SUPABASE_URL` | Opsional | Mengaktifkan sinkronisasi multiplayer lintas perangkat |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Opsional | Mengaktifkan sinkronisasi multiplayer lintas perangkat |
+| `NEXT_PUBLIC_APP_URL` | Opsional | Dipakai untuk membangun URL join absolut pada kode QR |
 
-Royal64 runs fully without any env vars — multiplayer rooms and QR codes
-still work, but move sync will show "Realtime provider not configured"
-instead of connecting.
+Royal64 tetap berjalan penuh tanpa env var apa pun — room, QR, dan ruang
+tunggu tetap berfungsi, tapi sinkronisasi langkah akan menampilkan
+"Realtime belum dikonfigurasi" alih-alih pura-pura tersambung.
 
-`@supabase/supabase-js` is already listed as a dependency (needed so the
-build compiles even before you configure it) — it stays inert until the
-two env vars above are set.
+`@supabase/supabase-js` sudah terdaftar sebagai dependency (supaya build
+tetap sukses sebelum dikonfigurasi) — dia diam saja sampai dua env var di
+atas diisi.
 
-To wire up real multiplayer:
-1. Create a free project at [supabase.com](https://supabase.com)
-2. Enable Realtime on your project
-3. Set the two env vars above
+Cara mengaktifkan multiplayer sungguhan:
+1. Buat project gratis di [supabase.com](https://supabase.com)
+2. Aktifkan Realtime di project tersebut
+3. Isi dua env var di atas
 
 ---
 
-## Deploying to Vercel
+## Deploy ke Vercel
 
 ```bash
 vercel
 ```
 
-Or import the repository directly in the Vercel dashboard. No special
-configuration is needed beyond the optional env vars above — this is a
-standard Next.js App Router project.
+Atau import repository langsung lewat dashboard Vercel. Tidak perlu
+konfigurasi khusus di luar env var opsional di atas — ini project Next.js
+App Router standar.
 
 ---
 
-## Project structure
+## Struktur Proyek
 
 ```text
 Royal64/
+├── .github/assets/       # Banner & ikon animasi untuk README ini
 ├── app/                  # Next.js App Router routes
-│   ├── dashboard/        # Luxury digital lobby (first screen)
-│   ├── game/             # Game Portal + [gameId] room + segment error boundary
-│   ├── offline/          # Service-worker offline fallback page
-│   ├── layout.tsx        # Fonts, metadata, PWA registration
-│   ├── error.tsx         # Root error boundary
-│   └── not-found.tsx     # Custom 404
+│   ├── dashboard/        # Lobi digital premium (layar pertama)
+│   ├── game/             # Portal Permainan + ruang [gameId] + error boundary
+│   ├── offline/          # Halaman fallback offline (service worker)
+│   ├── layout.tsx        # Font, metadata, registrasi PWA
+│   ├── error.tsx         # Error boundary utama
+│   └── not-found.tsx     # Halaman 404 kustom
 ├── components/
-│   ├── chess/            # Board, pieces, squares, clock, controls, modals
-│   ├── dashboard/        # Hero, quick actions, nav, theme selector
-│   ├── pwa/              # Install button, service worker registration
-│   └── ui/               # Toast notifications (no browser alert())
+│   ├── chess/            # Papan, bidak, petak, jam, kontrol, modal, lobi
+│   ├── dashboard/        # Hero, aksi cepat, navigasi, kartu fitur
+│   ├── pwa/              # Tombol install, registrasi service worker
+│   └── ui/               # Notifikasi toast (tanpa alert() browser)
 ├── lib/
-│   ├── chess/            # Engine wrapper, AI, computer service, Game ID
-│   ├── realtime/         # Realtime provider abstraction + Supabase impl
-│   └── store/            # Zustand game state store
+│   ├── chess/            # Wrapper engine, AI, layanan komputer, Game ID
+│   ├── realtime/         # Abstraksi provider realtime + implementasi Supabase
+│   └── store/            # Zustand store status permainan & pemain
 ├── public/
-│   ├── icons/            # PWA icons (SVG)
+│   ├── icons/            # Ikon PWA (dari gambar lambang pengguna)
 │   ├── fonts/            # Leander.ttf, WoodChaos.otf (self-hosted)
-│   ├── textures/         # Wood-grain SVG texture used across the UI
+│   ├── textures/         # Tekstur SVG kayu dipakai di seluruh UI
 │   ├── manifest.webmanifest
-│   └── sw.js             # Service worker (cache strategy + offline)
-├── tests/                # Vitest unit tests for chess rules
+│   └── sw.js             # Service worker (strategi cache + offline)
+├── tests/                # Tes unit Vitest untuk aturan catur & AI
 ├── .env.example
 └── README.md
 ```
 
 ---
 
-## Security notes
+## Catatan Keamanan
 
-- No hardcoded secrets anywhere in source; Supabase credentials are read
-  from environment variables only.
-- Game IDs are generated with `crypto.getRandomValues` and validated with
-  a strict regex before any room lookup.
-- All multiplayer moves are re-validated by the local chess engine before
-  being applied — a malicious or corrupted payload from the network
-  cannot force an illegal board state client-side. (A production backend
-  should additionally validate moves server-side before broadcasting.)
-- `.env.local` and `.env` are git-ignored; only `.env.example` (no real
-  values) is committed.
+- Tidak ada secret yang di-hardcode di source; kredensial Supabase hanya
+  dibaca dari environment variables.
+- Game ID dibuat dengan `crypto.getRandomValues` dan divalidasi dengan
+  regex ketat sebelum pencarian room mana pun.
+- Semua langkah multiplayer divalidasi ulang oleh engine catur lokal
+  sebelum diterapkan — payload jaringan yang jahat/rusak tidak bisa
+  memaksakan posisi papan ilegal di sisi client. (Backend produksi
+  sebaiknya juga memvalidasi langkah di server sebelum broadcast.)
+- `.env.local` dan `.env` di-gitignore; hanya `.env.example` (tanpa nilai
+  asli) yang di-commit.
 
-## Browser support
+## Dukungan Browser
 
-Targets current Chrome, Edge, Firefox, Safari, and their mobile
-equivalents. Features without broad support (e.g. `navigator.share`,
-`beforeinstallprompt`) degrade gracefully to clipboard-copy and manual
-install instructions respectively.
+Menyasar Chrome, Edge, Firefox, Safari versi terkini dan versi mobile-nya.
+Fitur yang tidak didukung luas (mis. `navigator.share`,
+`beforeinstallprompt`) otomatis fallback ke salin-clipboard dan instruksi
+install manual.
 
 ## Troubleshooting
 
-- **Install button says "unavailable"**: `beforeinstallprompt` isn't
-  fired by Safari/iOS or by browsers where the PWA criteria aren't met
-  (HTTPS + valid manifest + registered service worker). Use "Add to Home
-  Screen" manually on iOS.
-- **Multiplayer shows "not configured"**: see the Supabase setup steps
-  above — this is the intended honest fallback, not a bug.
-- **TypeScript path alias errors**: confirm `tsconfig.json`'s `paths`
-  (`@/*`) match your editor's TS server version.
+<details>
+<summary>Tombol install bilang "tidak tersedia"</summary>
+<br/>
+
+`beforeinstallprompt` tidak dipicu oleh Safari/iOS atau browser yang belum
+memenuhi kriteria PWA (HTTPS + manifest valid + service worker
+terdaftar). Gunakan "Tambahkan ke Layar Utama" secara manual di iOS.
+</details>
+
+<details>
+<summary>Multiplayer menampilkan "belum dikonfigurasi"</summary>
+<br/>
+
+Lihat langkah setup Supabase di atas — ini memang fallback jujur yang
+disengaja, bukan bug.
+</details>
+
+<details>
+<summary>Error path alias TypeScript</summary>
+<br/>
+
+Pastikan `paths` (`@/*`) di `tsconfig.json` cocok dengan versi TS server
+editor-mu.
+</details>
 
 ---
 
-**Royal64**
-**Where Every Move Becomes History.**
+<div align="center">
+
+<img src=".github/assets/feature-ai.svg" width="64" alt=""/>
+
+**Royal64** — Setiap Langkah Menjadi Sejarah.
 
 Developer: **Nicholas.ofc**
+
+</div>
