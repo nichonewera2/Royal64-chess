@@ -2,7 +2,11 @@
 
 import { motion } from 'framer-motion';
 import type { Color, PieceSymbol } from 'chess.js';
-import { PieceGraphic } from './PieceGraphics';
+
+const GLYPHS: Record<Color, Record<PieceSymbol, string>> = {
+  w: { k: '♔', q: '♕', r: '♖', b: '♗', n: '♘', p: '♙' },
+  b: { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' }
+};
 
 const PIECE_NAME_ID: Record<PieceSymbol, string> = {
   p: 'pion',
@@ -20,26 +24,17 @@ interface ChessPieceProps {
 }
 
 export function ChessPiece({ type, color, isLifted }: ChessPieceProps) {
-  const isWhite = color === 'w';
-
   return (
     <motion.div
       layout
       transition={{ type: 'spring', stiffness: 500, damping: 32 }}
-      className={`select-none pointer-events-none flex items-center justify-center w-full h-full p-[8%] ${
-        isLifted ? 'scale-110 -translate-y-1' : ''
-      }`}
-      style={{
-        transition: 'transform 120ms ease-out',
-        filter: isWhite
-          ? 'drop-shadow(0 2px 2px rgba(0,0,0,0.45))'
-          : 'drop-shadow(0 0 2px rgba(240,168,60,0.4)) drop-shadow(0 2px 2px rgba(0,0,0,0.55))'
-      }}
-      aria-label={`${isWhite ? 'Putih' : 'Hitam'} ${PIECE_NAME_ID[type]}`}
+      className={`select-none pointer-events-none flex items-center justify-center w-full h-full text-[clamp(28px,6vw,52px)] leading-none drop-shadow-[0_3px_2px_rgba(0,0,0,0.45)] ${
+        color === 'w' ? 'text-ivory' : 'text-espresso-950'
+      } ${isLifted ? 'scale-110 -translate-y-1' : ''}`}
+      style={{ transition: 'transform 120ms ease-out' }}
+      aria-label={`${color === 'w' ? 'Putih' : 'Hitam'} ${PIECE_NAME_ID[type]}`}
     >
-      <svg viewBox="0 0 45 45" className="w-full h-full overflow-visible">
-        <PieceGraphic type={type} color={color} />
-      </svg>
+      {GLYPHS[color][type]}
     </motion.div>
   );
 }

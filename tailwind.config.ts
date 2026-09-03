@@ -50,8 +50,13 @@ const config: Config = {
         panel: '0 10px 30px -10px rgba(0,0,0,0.5)'
       },
       backgroundImage: {
+        // Dark squares are a proper walnut BROWN, not near-black — this is
+        // also what real wooden chess boards look like (brown/tan, not
+        // black/tan). The earlier near-black value (#0f0a06) was almost
+        // identical to the black piece color, so black pieces on dark
+        // squares had almost no contrast. Light squares are unchanged.
         'wood-dark':
-          'linear-gradient(135deg, #3a2716 0%, #1f150d 50%, #0f0a06 100%)',
+          'linear-gradient(135deg, #6b4226 0%, #59371f 50%, #4a2c17 100%)',
         'wood-light':
           'linear-gradient(135deg, #efdcb8 0%, #e3c691 50%, #d4ac6e 100%)'
       },
