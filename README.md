@@ -1,25 +1,32 @@
+<a name="top"></a>
 <div align="center">
 
-<img src=".github/assets/banner.svg" alt="Royal64 banner" width="100%" />
+<a href="#-mini-puzzle--tebak-langkahnya">
+<img src=".github/assets/banner.svg" alt="Royal64 banner — klik untuk mini-puzzle" width="100%" />
+</a>
 
 <br/>
 
-![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Tailwind](https://img.shields.io/badge/Tailwind_CSS-3.4-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white)
-![chess.js](https://img.shields.io/badge/chess.js-1.0-8A3820?style=flat-square)
-![PWA](https://img.shields.io/badge/PWA-ready-F0A83C?style=flat-square)
-![License](https://img.shields.io/badge/status-actively--built-9A7530?style=flat-square)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Tailwind](https://img.shields.io/badge/Tailwind_CSS-3.4-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![chess.js](https://img.shields.io/badge/chess.js-1.0-8A3820?style=flat-square)](https://github.com/jhlywa/chess.js)
+[![PWA](https://img.shields.io/badge/PWA-ready-F0A83C?style=flat-square)](#fitur-unggulan)
+[![Mini Puzzle](https://img.shields.io/badge/coba-mini--puzzle-e08e1f?style=flat-square&logo=lichess&logoColor=white)](#-mini-puzzle--tebak-langkahnya)
 
 **Klub catur vintage kayu dengan AI sungguhan, multiplayer real-time, dan mode penonton.**
 Developer: **Nicholas.ofc**
 
 </div>
 
----
+<img src=".github/assets/divider.svg" alt="" width="100%" height="24"/>
 
 <div align="center">
-  <img src=".github/assets/board-demo.svg" alt="Animated knight hopping across the Royal64 board" width="320" />
+  <a href="#-mini-puzzle--tebak-langkahnya">
+    <img src=".github/assets/board-demo.svg" alt="Animated knight hopping across the Royal64 board — klik untuk main puzzle" width="320" />
+  </a>
+  <br/>
+  <sub>👆 klik papan untuk langsung ke mini-puzzle</sub>
 </div>
 
 <br/>
@@ -32,6 +39,7 @@ lain. Dibangun dengan Next.js, TypeScript, Tailwind CSS, dan chess.js.
 ## Daftar Isi
 
 - [Fitur Unggulan](#fitur-unggulan)
+- [🧩 Mini Puzzle — Tebak Langkahnya](#-mini-puzzle--tebak-langkahnya)
 - [Apa yang Nyata vs. Apa yang Jujur Masih Placeholder](#apa-yang-nyata-vs-apa-yang-jujur-masih-placeholder)
 - [Mulai Cepat](#mulai-cepat)
 - [Environment Variables](#environment-variables)
@@ -41,13 +49,14 @@ lain. Dibangun dengan Next.js, TypeScript, Tailwind CSS, dan chess.js.
 - [Dukungan Browser](#dukungan-browser)
 - [Troubleshooting](#troubleshooting)
 
----
+<img src=".github/assets/divider.svg" alt="" width="100%" height="24"/>
 
 ## Fitur Unggulan
 
 <table>
 <tr>
 <td align="center" width="25%">
+
   <img src=".github/assets/feature-ai.svg" width="120" alt="AI animation"/>
   <br/><b>Royal64 AI</b>
   <br/><sub>Minimax + alpha-beta sungguhan, 3 tingkat kesulitan</sub>
@@ -75,7 +84,64 @@ dalam pertandingan, mode penonton, nameplate dengan font kustom, efek suara
 sintesis untuk tiap jenis langkah, dan sistem menyerah/tawaran seri yang
 benar-benar berfungsi dua arah.
 
----
+<div align="right"><sub><a href="#top">⬆️ Kembali ke atas</a></sub></div>
+
+<img src=".github/assets/divider.svg" alt="" width="100%" height="24"/>
+
+## 🧩 Mini Puzzle — Tebak Langkahnya
+
+Dua posisi di bawah ini **sama persis** dengan yang sudah diverifikasi
+langkah demi langkah di `lib/chess/puzzles.ts` dan bisa langsung kamu
+mainkan di dalam aplikasi (menu **Main → Mode Puzzle**) — bukan cuma
+dekorasi README. Klik baris **"Lihat Jawaban"** untuk membuka/menutup
+solusinya (sungguhan interaktif, tanpa JavaScript, native fitur GitHub).
+
+<table>
+<tr>
+<td align="center" width="50%">
+
+<img src=".github/assets/puzzle1.svg" width="240" alt="Puzzle 1: Mahkota Sendirian"/>
+
+**Puzzle 1 — "Mahkota Sendirian"**
+Putih jalan. Skakmat dalam satu langkah!
+
+<details>
+<summary>🔎 Lihat Jawaban</summary>
+<br/>
+
+**Qh2–h8#** — Menteri bergerak sepanjang kolom-h ke h8, memberi skak
+sepanjang baris ke-8. Raja hitam di a8 tidak punya petak lolos: a7 dan b7
+dijaga Raja putih di a6, sedangkan b8 dijaga Menteri sendiri.
+
+</details>
+</td>
+<td align="center" width="50%">
+
+<img src=".github/assets/puzzle2.svg" width="240" alt="Puzzle 2: Kuda Bercabang"/>
+
+**Puzzle 2 — "Kuda Bercabang"**
+Putih jalan. Satu langkah kuda mengancam dua bidak sekaligus!
+
+<details>
+<summary>🔎 Lihat Jawaban</summary>
+<br/>
+
+**Ne4–f6+** — Kuda bercabang (fork): memberi skak ke Raja hitam di g8
+sekaligus mengancam Menteri hitam di d5. Kuda aman karena Raja g8 tidak
+bisa menjangkaunya.
+
+</details>
+</td>
+</tr>
+</table>
+
+<div align="center">
+<sub>Mau coba lebih banyak? Ada total 4 puzzle terverifikasi langsung di aplikasi, tingkat mudah sampai sulit.</sub>
+</div>
+
+<div align="right"><sub><a href="#top">⬆️ Kembali ke atas</a></sub></div>
+
+<img src=".github/assets/divider.svg" alt="" width="100%" height="24"/>
 
 ## Apa yang Nyata vs. Apa yang Jujur Masih Placeholder
 
@@ -137,7 +203,9 @@ pemutaran `<audio>` file `.mp3`/`.wav` milikmu sendiri.
 
 </details>
 
----
+<div align="right"><sub><a href="#top">⬆️ Kembali ke atas</a></sub></div>
+
+<img src=".github/assets/divider.svg" alt="" width="100%" height="24"/>
 
 ## Mulai Cepat
 
@@ -174,7 +242,9 @@ Tes mencakup aturan catur inti (langkah legal/ilegal, deteksi skakmat,
 rokade, en passant, promosi), pembuatan Game ID, parsing batas waktu, serta
 perilaku AI (menghindari pengulangan posisi, menangkap bidak gratis).
 
----
+<div align="right"><sub><a href="#top">⬆️ Kembali ke atas</a></sub></div>
+
+<img src=".github/assets/divider.svg" alt="" width="100%" height="24"/>
 
 ## Environment Variables
 
@@ -203,7 +273,9 @@ Cara mengaktifkan multiplayer sungguhan:
 2. Aktifkan Realtime di project tersebut
 3. Isi dua env var di atas
 
----
+<div align="right"><sub><a href="#top">⬆️ Kembali ke atas</a></sub></div>
+
+<img src=".github/assets/divider.svg" alt="" width="100%" height="24"/>
 
 ## Deploy ke Vercel
 
@@ -215,7 +287,9 @@ Atau import repository langsung lewat dashboard Vercel. Tidak perlu
 konfigurasi khusus di luar env var opsional di atas — ini project Next.js
 App Router standar.
 
----
+<div align="right"><sub><a href="#top">⬆️ Kembali ke atas</a></sub></div>
+
+<img src=".github/assets/divider.svg" alt="" width="100%" height="24"/>
 
 ## Struktur Proyek
 
@@ -249,7 +323,9 @@ Royal64/
 └── README.md
 ```
 
----
+<div align="right"><sub><a href="#top">⬆️ Kembali ke atas</a></sub></div>
+
+<img src=".github/assets/divider.svg" alt="" width="100%" height="24"/>
 
 ## Catatan Keamanan
 
@@ -298,7 +374,9 @@ Pastikan `paths` (`@/*`) di `tsconfig.json` cocok dengan versi TS server
 editor-mu.
 </details>
 
----
+<div align="right"><sub><a href="#top">⬆️ Kembali ke atas</a></sub></div>
+
+<img src=".github/assets/divider.svg" alt="" width="100%" height="24"/>
 
 <div align="center">
 
