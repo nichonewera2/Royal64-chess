@@ -2,18 +2,18 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flag, Handshake, RotateCcw, Check, X } from 'lucide-react';
+import { Flag, Handshake, RotateCcw } from 'lucide-react';
 import { useGameStore } from '@/lib/store/gameStore';
+import { playGameStartSound } from '@/lib/audio/sfx';
 
 export type ControlsYouAre = 'w' | 'b' | 'both';
 
 interface ChessControlsProps {
   /** 'w'/'b' when you're a fixed side (computer/online); 'both' for local pass-and-play. */
   youAre: ControlsYouAre;
-  /** Called when a resign/draw-offer/draw-response happens, so online mode can broadcast it. */
+  /** Called when a resign/draw-offer happens, so online mode can broadcast it. */
   onResign?: (by: 'w' | 'b') => void;
   onDrawOffer?: (by: 'w' | 'b') => void;
-  onDrawResponse?: (accepted: boolean) => void;
   /** True only for vs-computer mode: the "opponent" auto-decides instead of a human. */
   opponentIsComputer?: boolean;
 }
@@ -22,7 +22,6 @@ export function ChessControls({
   youAre,
   onResign,
   onDrawOffer,
-  onDrawResponse,
   opponentIsComputer
 }: ChessControlsProps) {
   const { resetGame, mode, engine, status, resign, offerDraw, drawOfferedBy, respondDraw } =
@@ -68,43 +67,10 @@ export function ChessControls({
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Incoming draw offer banner */}
-      <AnimatePresence>
-        {offerIsIncoming && (
-          <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="flex items-center justify-between gap-2 bg-gold-500/15 border border-gold-500/50 rounded-lg px-3 py-2 text-sm text-parchment-100"
-          >
-            <span>
-              {youAre === 'both'
-                ? `${drawOfferedBy === 'w' ? 'Putih' : 'Hitam'} menawarkan seri.`
-                : 'Lawan menawarkan seri.'}
-            </span>
-            <div className="flex gap-1.5 shrink-0">
-              <button
-                onClick={() => {
-                  respondDraw(true);
-                  onDrawResponse?.(true);
-                }}
-                className="flex items-center gap-1 bg-emerald-600/80 hover:bg-emerald-500 text-white text-xs px-2.5 py-1.5 rounded-md"
-              >
-                <Check size={13} /> Terima
-              </button>
-              <button
-                onClick={() => {
-                  respondDraw(false);
-                  onDrawResponse?.(false);
-                }}
-                className="flex items-center gap-1 bg-espresso-800 hover:bg-mahogany-600 text-parchment-100 text-xs px-2.5 py-1.5 rounded-md"
-              >
-                <X size={13} /> Tolak
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Incoming draw offers are shown via <DrawOfferOverlay/> — a fixed,
+          always-visible overlay — instead of here, since an inline banner
+          in the sidebar could sit below the fold on mobile and require
+          scrolling to notice. */}
 
       {/* Waiting-for-response indicator (the side who just offered) */}
       {pendingOffer && !offerIsIncoming && (
@@ -191,7 +157,10 @@ export function ChessControls({
           <Handshake size={16} /> Tawarkan Seri
         </button>
         <button
-          onClick={() => resetGame(mode)}
+          onClick={() => {
+            resetGame(mode);
+            playGameStartSound();
+          }}
           className="flex items-center gap-2 px-3 py-2 rounded-md bg-espresso-800 hover:bg-mahogany-600 text-parchment-100 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-400"
         >
           <RotateCcw size={16} /> Main Baru

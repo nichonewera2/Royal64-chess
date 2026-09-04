@@ -164,7 +164,9 @@ label dan mudah diganti, bukan dipalsukan:
 | Obrolan dalam pertandingan | **Sepenuhnya nyata** — broadcast real-time di channel Supabase yang sama dengan langkah |
 | Mode penonton | **Sepenuhnya nyata** — masuk Game ID mana pun lewat "Tonton Pertandingan" untuk mengikuti channel room secara read-only |
 | Menyerah & tawaran seri | **Sepenuhnya nyata dan dua arah** — broadcast ke lawan, papan otomatis terkunci begitu game berakhir dengan cara apa pun |
-| Suara langkah/makan/skak/game selesai | **Disintesis saat runtime** dengan Web Audio API (lihat catatan kejujuran di bawah) — bukan rekaman audio |
+| Suara langkah/makan/skak/menang/kalah/seri/mulai/notifikasi | **Disintesis saat runtime** dengan Web Audio API (lihat catatan kejujuran di bawah) — bukan rekaman audio |
+| Overlay kemenangan/kekalahan/seri | **Sepenuhnya nyata** — overlay layar penuh dengan animasi confetti, bukan sekadar teks fade-in |
+| Overlay tawaran seri | **Sepenuhnya nyata** — muncul sebagai overlay tetap di bagian atas layar (tidak perlu scroll untuk melihatnya) |
 | Font kustom (Leander untuk nama, Wood Chaos untuk judul) | **Sepenuhnya nyata**, di-hosting sendiri via `@font-face` — lihat catatan lisensi font di bawah |
 | Ikon aplikasi/PWA | Dibuat dari gambar lambang yang disediakan pengguna (`icon-192.png`, `icon-512.png`, `icon-maskable.png`, `favicon.ico`) |
 

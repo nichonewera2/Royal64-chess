@@ -8,6 +8,9 @@ import { getComputerOpponent } from '@/lib/chess/computer';
 import type { Difficulty } from '@/lib/chess/ai';
 import { ChessBoard } from './ChessBoard';
 import { ChessSidebar } from './ChessSidebar';
+import { DrawOfferOverlay } from './DrawOfferOverlay';
+import { GameEndOverlay } from './GameEndOverlay';
+import { playGameStartSound } from '@/lib/audio/sfx';
 
 const DIFFICULTIES: Difficulty[] = ['beginner', 'club', 'expert'];
 const DIFFICULTY_LABEL: Record<Difficulty, string> = {
@@ -26,6 +29,7 @@ export function ComputerGame() {
   useEffect(() => {
     hydrate();
     resetGame('computer');
+    playGameStartSound();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -85,6 +89,8 @@ export function ComputerGame() {
         controlsYouAre="w"
         opponentIsComputer
       />
+      <DrawOfferOverlay youAre="w" />
+      <GameEndOverlay perspective="w" />
     </div>
   );
 }

@@ -16,7 +16,6 @@ interface ChessSidebarProps {
   showControls?: boolean;
   onResign?: (by: 'w' | 'b') => void;
   onDrawOffer?: (by: 'w' | 'b') => void;
-  onDrawResponse?: (accepted: boolean) => void;
   opponentIsComputer?: boolean;
   children?: React.ReactNode;
 }
@@ -29,7 +28,6 @@ export function ChessSidebar({
   showControls = true,
   onResign,
   onDrawOffer,
-  onDrawResponse,
   opponentIsComputer,
   children
 }: ChessSidebarProps) {
@@ -44,7 +42,6 @@ export function ChessSidebar({
           youAre={controlsYouAre}
           onResign={onResign}
           onDrawOffer={onDrawOffer}
-          onDrawResponse={onDrawResponse}
           opponentIsComputer={opponentIsComputer}
         />
       )}

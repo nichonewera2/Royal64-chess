@@ -178,3 +178,52 @@ export function playGameEndSound() {
 export function playChatSound() {
   playTone({ frequency: 520, duration: 0.08, type: 'sine', volume: 0.28 });
 }
+
+/** Plays when a fresh game begins — a bright rising arpeggio. */
+export function playGameStartSound() {
+  [392, 494, 587, 659].forEach((freq, i) => {
+    playTone({ frequency: freq, duration: 0.22, type: 'triangle', volume: 0.3, delay: i * 0.07 });
+  });
+}
+
+/**
+ * Triumphant fanfare for the winning side — richer and longer than the
+ * generic game-end sound, with a layered "chord swell" finish so it reads
+ * as a genuine celebration rather than a neutral notification.
+ */
+export function playWinSound() {
+  const melody = [523, 659, 784, 1046];
+  melody.forEach((freq, i) => {
+    playTone({ frequency: freq, duration: 0.28, type: 'triangle', volume: 0.36, delay: i * 0.12 });
+  });
+  // Closing chord swell (three notes together for a "ta-daa" finish)
+  [784, 988, 1318].forEach((freq) => {
+    playTone({ frequency: freq, duration: 0.9, type: 'sine', volume: 0.24, delay: 0.5 });
+  });
+  playKnock({ duration: 0.15, volume: 0.4, lowpass: 2400, delay: 0.5 });
+}
+
+/** Somber descending tone for the losing side — subdued, not mocking. */
+export function playLoseSound() {
+  [440, 349, 293, 220].forEach((freq, i) => {
+    playTone({ frequency: freq, duration: 0.4, type: 'sine', volume: 0.26, delay: i * 0.18 });
+  });
+}
+
+/** Neutral back-and-forth two-tone for a draw — neither win nor loss. */
+export function playDrawSound() {
+  [440, 392, 440, 392].forEach((freq, i) => {
+    playTone({ frequency: freq, duration: 0.24, type: 'triangle', volume: 0.28, delay: i * 0.16 });
+  });
+}
+
+/** Gentle alert "ding" for incoming draw offers and join requests. */
+export function playNotificationSound() {
+  playTone({ frequency: 880, duration: 0.14, type: 'sine', volume: 0.3 });
+  playTone({ frequency: 1318, duration: 0.18, type: 'sine', volume: 0.22, delay: 0.09 });
+}
+
+/** Sharp, urgent tick for the low-time warning (under 30 seconds). */
+export function playLowTimeTick() {
+  playTone({ frequency: 1046, duration: 0.06, type: 'square', volume: 0.18 });
+}

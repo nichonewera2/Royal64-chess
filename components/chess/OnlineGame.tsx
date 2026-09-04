@@ -13,6 +13,9 @@ import { ChessBoard } from './ChessBoard';
 import { ChessSidebar } from './ChessSidebar';
 import { ChatBox } from './ChatBox';
 import { HostLobby, JoinerLobby } from './RoomLobby';
+import { DrawOfferOverlay } from './DrawOfferOverlay';
+import { GameEndOverlay } from './GameEndOverlay';
+import { playGameStartSound, playNotificationSound } from '@/lib/audio/sfx';
 import { WifiOff, Wifi, Loader2, Eye } from 'lucide-react';
 
 export type SeatRole = 'w' | 'b' | 'spectator';
@@ -210,9 +213,11 @@ export function OnlineGame({
       'join-request',
       (payload) => {
         if (!isHost) return;
-        setPendingRequests((prev) =>
-          prev.some((r) => r.playerId === payload.playerId) ? prev : [...prev, payload]
-        );
+        setPendingRequests((prev) => {
+          if (prev.some((r) => r.playerId === payload.playerId)) return prev;
+          playNotificationSound();
+          return [...prev, payload];
+        });
       }
     );
     // Joiner: the host approved us — flip to the board at the same moment
@@ -230,6 +235,7 @@ export function OnlineGame({
         setResolvedTimeControlMs(payload.timeControlMs);
         resetGame('online', payload.timeControlMs);
         updateGameStarted(true);
+        playGameStartSound();
       }
     });
     const unsubscribeJoinDeclined = provider.on<{ playerId: string }>('join-declined', (payload) => {
@@ -300,6 +306,7 @@ export function OnlineGame({
     // joiner flips the moment the 'join-approved' broadcast above arrives
     // on their screen — both happen within the same realtime round-trip.
     updateGameStarted(true);
+    playGameStartSound();
   }
 
   function handleDeclineJoin(joinerId: string) {
@@ -367,7 +374,6 @@ export function OnlineGame({
           showControls={isPlayer}
           onResign={handleResignBroadcast}
           onDrawOffer={handleDrawOfferBroadcast}
-          onDrawResponse={handleDrawResponseBroadcast}
         >
           <ChatBox
             provider={provider}
@@ -378,6 +384,12 @@ export function OnlineGame({
           />
         </ChessSidebar>
       </div>
+      {isPlayer && (
+        <>
+          <DrawOfferOverlay youAre={playerColor ?? 'both'} onRespond={handleDrawResponseBroadcast} />
+          <GameEndOverlay perspective={playerColor} />
+        </>
+      )}
     </div>
   );
 }

@@ -5,6 +5,9 @@ import { useGameStore } from '@/lib/store/gameStore';
 import { usePlayerStore } from '@/lib/store/playerStore';
 import { ChessBoard } from './ChessBoard';
 import { ChessSidebar } from './ChessSidebar';
+import { DrawOfferOverlay } from './DrawOfferOverlay';
+import { GameEndOverlay } from './GameEndOverlay';
+import { playGameStartSound } from '@/lib/audio/sfx';
 
 export function LocalGame() {
   const { resetGame } = useGameStore();
@@ -16,6 +19,7 @@ export function LocalGame() {
   useEffect(() => {
     hydrate();
     resetGame('local');
+    playGameStartSound();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -59,6 +63,8 @@ export function LocalGame() {
         <ChessBoard />
         <ChessSidebar whiteName={player1Name} blackName={player2Name} controlsYouAre="both" />
       </div>
+      <DrawOfferOverlay youAre="both" />
+      <GameEndOverlay perspective={null} />
     </div>
   );
 }

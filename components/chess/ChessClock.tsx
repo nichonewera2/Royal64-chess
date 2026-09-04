@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useGameStore } from '@/lib/store/gameStore';
 import { PlayerNameplate } from './PlayerNameplate';
+import { playLowTimeTick } from '@/lib/audio/sfx';
 import clsx from 'clsx';
 
 function formatMs(ms: number): string {
@@ -21,12 +22,14 @@ interface ChessClockProps {
 export function ChessClock({ color, name, isYou }: ChessClockProps) {
   const { clock, tickClock, engine, status, timeControlMs } = useGameStore();
   const lastTick = useRef<number>(Date.now());
+  const lastTickedSecond = useRef<number | null>(null);
   const isActive = engine.turn === color && status !== 'checkmate' && status !== 'stalemate';
   const hasTimeLimit = timeControlMs !== null;
 
   useEffect(() => {
     if (!isActive || !hasTimeLimit) return;
     lastTick.current = Date.now();
+    lastTickedSecond.current = null; // fresh guard each time this clock starts a turn
     const interval = setInterval(() => {
       const now = Date.now();
       const delta = now - lastTick.current;
@@ -38,6 +41,18 @@ export function ChessClock({ color, name, isYou }: ChessClockProps) {
 
   const ms = color === 'w' ? clock.whiteMs : clock.blackMs;
   const isLow = hasTimeLimit && ms < 30_000;
+  const wholeSeconds = Math.ceil(ms / 1000);
+
+  // Urgent tick for the final 10 seconds — once per whole second, not once
+  // per 250ms polling interval, so it reads as a countdown rather than a
+  // buzz.
+  useEffect(() => {
+    if (!isActive || !hasTimeLimit) return;
+    if (wholeSeconds <= 10 && wholeSeconds > 0 && lastTickedSecond.current !== wholeSeconds) {
+      lastTickedSecond.current = wholeSeconds;
+      playLowTimeTick();
+    }
+  }, [wholeSeconds, isActive, hasTimeLimit]);
 
   return (
     <div
