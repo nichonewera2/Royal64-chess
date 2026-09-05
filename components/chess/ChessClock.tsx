@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useGameStore } from '@/lib/store/gameStore';
 import { PlayerNameplate } from './PlayerNameplate';
 import { playLowTimeTick } from '@/lib/audio/sfx';
@@ -20,28 +20,48 @@ interface ChessClockProps {
 }
 
 export function ChessClock({ color, name, isYou }: ChessClockProps) {
-  const { clock, tickClock, engine, status, timeControlMs } = useGameStore();
-  const lastTick = useRef<number>(Date.now());
+  const { clock, checkTimeout, engine, status, timeControlMs } = useGameStore();
   const lastTickedSecond = useRef<number | null>(null);
   const isActive = engine.turn === color && status !== 'checkmate' && status !== 'stalemate';
   const hasTimeLimit = timeControlMs !== null;
 
-  useEffect(() => {
-    if (!isActive || !hasTimeLimit) return;
-    lastTick.current = Date.now();
-    lastTickedSecond.current = null; // fresh guard each time this clock starts a turn
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const delta = now - lastTick.current;
-      lastTick.current = now;
-      tickClock(color, delta);
-    }, 250);
-    return () => clearInterval(interval);
-  }, [isActive, hasTimeLimit, color, tickClock]);
+  // The "banked" time as of the start of the current turn (authoritative,
+  // set by the store whenever a move commits — see gameStore.ts playMove).
+  const bankedMs = color === 'w' ? clock.whiteMs : clock.blackMs;
 
-  const ms = color === 'w' ? clock.whiteMs : clock.blackMs;
-  const isLow = hasTimeLimit && ms < 30_000;
-  const wholeSeconds = Math.ceil(ms / 1000);
+  // The LIVE displayed value, recomputed fresh from real timestamps every
+  // tick — bankedMs minus time elapsed since activeSince — rather than an
+  // accumulated running total. This is what makes it correct even after a
+  // long synchronous block (the AI's minimax search freezing the main
+  // thread for a second or more): whenever this effect DOES get to run
+  // again, it recalculates from `Date.now()` directly, so it always shows
+  // (and the store always deducts) the true elapsed time — nothing can be
+  // silently lost the way an accumulating interval could when torn down
+  // mid-block before its final catch-up tick fires.
+  const [liveMs, setLiveMs] = useState(bankedMs);
+
+  useEffect(() => {
+    if (!isActive || !hasTimeLimit) {
+      setLiveMs(bankedMs);
+      return;
+    }
+    lastTickedSecond.current = null; // fresh guard each time this clock starts a turn
+
+    function update() {
+      const activeSince = useGameStore.getState().clock.activeSince;
+      const elapsed = activeSince ? Date.now() - activeSince : 0;
+      setLiveMs(Math.max(0, bankedMs - elapsed));
+      checkTimeout();
+    }
+
+    update();
+    const interval = setInterval(update, 250);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive, hasTimeLimit, bankedMs, checkTimeout]);
+
+  const isLow = hasTimeLimit && liveMs < 30_000;
+  const wholeSeconds = Math.ceil(liveMs / 1000);
 
   // Urgent tick for the final 10 seconds — once per whole second, not once
   // per 250ms polling interval, so it reads as a countdown rather than a
@@ -69,7 +89,7 @@ export function ChessClock({ color, name, isYou }: ChessClockProps) {
           isLow && 'text-red-300 animate-pulse'
         )}
       >
-        {hasTimeLimit ? formatMs(ms) : '∞'}
+        {hasTimeLimit ? formatMs(liveMs) : '∞'}
       </span>
     </div>
   );

@@ -44,12 +44,24 @@ export function DrawOfferOverlay({ youAre, onRespond }: DrawOfferOverlayProps) {
   return (
     <AnimatePresence>
       {isIncoming && (
-        <motion.div
-          initial={{ opacity: 0, y: -30, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -20, scale: 0.95 }}
-          transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-          className="fixed top-4 left-1/2 -translate-x-1/2 z-[150] w-[min(92vw,420px)]"
+        // Positioning (fixed + horizontal centering) lives on this PLAIN
+        // div, using flexbox instead of a transform. The centering was
+        // previously done with `left-1/2 -translate-x-1/2` directly on the
+        // motion.div below — but framer-motion controls the `transform`
+        // CSS property via inline style to animate y/scale, which
+        // completely overwrites any transform set by a Tailwind utility
+        // class on the SAME element. That silently dropped the -50% X
+        // offset, leaving only `left: 50%` in effect — the card rendered
+        // starting at the horizontal center and overflowing off the right
+        // edge instead of being centered. Keeping the animated element
+        // separate from the positioned element avoids the conflict.
+        <div className="fixed top-4 inset-x-0 z-[150] flex justify-center px-4 pointer-events-none">
+          <motion.div
+            initial={{ opacity: 0, y: -30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+            className="w-full max-w-[420px] pointer-events-auto"
         >
           <div className="flex items-center gap-3 bg-walnut-800 bg-[url('/textures/wood-grain.svg')] bg-cover border-2 border-gold-500/60 rounded-2xl px-5 py-4 shadow-board">
             <span className="w-11 h-11 shrink-0 rounded-full bg-gold-500/20 text-gold-400 flex items-center justify-center animate-pulse">
@@ -80,7 +92,8 @@ export function DrawOfferOverlay({ youAre, onRespond }: DrawOfferOverlayProps) {
               </button>
             </div>
           </div>
-        </motion.div>
+          </motion.div>
+        </div>
       )}
     </AnimatePresence>
   );

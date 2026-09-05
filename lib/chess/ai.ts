@@ -152,9 +152,9 @@ function shuffle<T>(arr: T[]): T[] {
  * Orders moves so captures of valuable pieces (especially by cheap
  * attackers) are searched first — classic MVV-LVA move ordering. This
  * isn't cosmetic: alpha-beta pruning cuts far more branches when the best
- * moves are examined early, which is what makes a real depth-4 search for
- * "Mahir" finish quickly enough to run on the main thread without
- * freezing the UI. Genuinely faster search, not a gimmick.
+ * moves are examined early, which is what keeps the search fast enough to
+ * run on the main thread without freezing the UI. Genuinely faster
+ * search, not a gimmick.
  */
 function orderMoves(moves: Move[]): Move[] {
   const captureScore = (m: Move): number => {
@@ -178,9 +178,10 @@ function minimax(
   depth: number,
   alpha: number,
   beta: number,
-  maximizing: boolean
+  maximizing: boolean,
+  deadline: number
 ): number {
-  if (depth === 0 || chess.isGameOver()) {
+  if (depth === 0 || chess.isGameOver() || Date.now() > deadline) {
     return evaluateBoard(chess);
   }
 
@@ -190,7 +191,7 @@ function minimax(
     let best = -Infinity;
     for (const m of moves) {
       chess.move(m.san);
-      best = Math.max(best, minimax(chess, depth - 1, alpha, beta, false));
+      best = Math.max(best, minimax(chess, depth - 1, alpha, beta, false, deadline));
       chess.undo();
       alpha = Math.max(alpha, best);
       if (beta <= alpha) break;
@@ -200,7 +201,7 @@ function minimax(
     let best = Infinity;
     for (const m of moves) {
       chess.move(m.san);
-      best = Math.min(best, minimax(chess, depth - 1, alpha, beta, true));
+      best = Math.min(best, minimax(chess, depth - 1, alpha, beta, true, deadline));
       chess.undo();
       beta = Math.min(beta, best);
       if (beta <= alpha) break;
@@ -256,9 +257,25 @@ export function pickComputerMove(
   let bestMove: Move = moves[0];
   let bestScore = maximizing ? -Infinity : Infinity;
 
+  // Hard time budget: this whole function runs synchronously on the main
+  // thread (no Web Worker), so a slow search would freeze the entire UI —
+  // including the chess clock, which found a real bug from this: a long
+  // enough block could cause the clock's next scheduled tick to be
+  // cancelled before it fired, silently losing that chunk of time (fixed
+  // separately in gameStore.ts by computing elapsed time from timestamps
+  // instead of accumulated ticks). This budget is a second line of
+  // defense that keeps the freeze itself short regardless of position
+  // complexity or device speed: once the deadline passes, remaining
+  // top-level candidates are skipped and the best move found so far is
+  // returned — thanks to move ordering, the strongest candidates are
+  // evaluated first, so an early cutoff rarely costs much strength.
+  const deadline = Date.now() + 600;
+
   for (const m of moves) {
+    if (Date.now() > deadline) break;
+
     chess.move(m.san);
-    let score = minimax(chess, depth - 1, -Infinity, Infinity, !maximizing);
+    let score = minimax(chess, depth - 1, -Infinity, Infinity, !maximizing, deadline);
 
     if (seen.has(positionKey(chess.fen()))) {
       // Discourage recreating a position already visited this game —

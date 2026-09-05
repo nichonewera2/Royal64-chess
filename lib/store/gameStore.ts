@@ -31,7 +31,13 @@ interface GameStoreState {
   playMove: (from: Square, to: Square, promotion?: 'q' | 'r' | 'b' | 'n') => boolean;
   resetGame: (mode: GameMode, timeControlMs?: number | null) => void;
   setGameId: (id: string | null) => void;
-  tickClock: (color: 'w' | 'b', deltaMs: number) => void;
+  /**
+   * Checks whether the side to move has run out of time RIGHT NOW, based
+   * on wall-clock time since `clock.activeSince` — not on accumulated
+   * interval ticks. Call this periodically (e.g. every 250ms) while a
+   * clock is active; safe to call redundantly.
+   */
+  checkTimeout: () => void;
   resign: (by: 'w' | 'b') => void;
   offerDraw: (by: 'w' | 'b') => void;
   respondDraw: (accepted: boolean) => void;
@@ -64,7 +70,28 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   selectSquare: (square, legalTargets) => set({ selectedSquare: square, legalTargets }),
 
   playMove: (from, to, promotion) => {
-    const { engine, moveList } = get();
+    const { engine, moveList, clock, timeControlMs } = get();
+
+    // Deduct real elapsed wall-clock time from the mover's clock BEFORE
+    // applying the move — computed directly from `activeSince`, not from
+    // accumulated setInterval ticks. This is what makes the clock correct
+    // even when a long synchronous computation (e.g. the computer AI's
+    // minimax search) blocks the main thread for a few seconds: no matter
+    // how long that block lasted, `Date.now() - activeSince` still
+    // captures the true elapsed time in one shot right here, so nothing
+    // gets lost the way an interval-based tick could when it's torn down
+    // mid-block before it fires.
+    const mover = engine.turn;
+    let nextClock = clock;
+    if (timeControlMs !== null && clock.activeSince !== null) {
+      const elapsed = Date.now() - clock.activeSince;
+      nextClock = {
+        whiteMs: mover === 'w' ? Math.max(0, clock.whiteMs - elapsed) : clock.whiteMs,
+        blackMs: mover === 'b' ? Math.max(0, clock.blackMs - elapsed) : clock.blackMs,
+        activeSince: Date.now()
+      };
+    }
+
     const result = engine.move({ from, to, promotion });
     if (!result) return false;
 
@@ -79,7 +106,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         isCapture: result.isCapture,
         isCastle: result.isCastle,
         isPromotion: result.isPromotion
-      }
+      },
+      clock: nextClock
     });
     return true;
   },
@@ -104,21 +132,24 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
   setGameId: (id) => set({ gameId: id }),
 
-  tickClock: (color, deltaMs) =>
+  checkTimeout: () =>
     set((s) => {
-      // No time limit — clocks never move, so nothing to tick down.
-      if (s.timeControlMs === null) return {};
+      if (s.timeControlMs === null || s.clock.activeSince === null) return {};
       if (s.status !== 'in_progress' && s.status !== 'check') return {};
 
-      const whiteMs = color === 'w' ? Math.max(0, s.clock.whiteMs - deltaMs) : s.clock.whiteMs;
-      const blackMs = color === 'b' ? Math.max(0, s.clock.blackMs - deltaMs) : s.clock.blackMs;
-      const timedOut = color === 'w' ? whiteMs <= 0 : blackMs <= 0;
+      const mover = s.engine.turn;
+      const elapsed = Date.now() - s.clock.activeSince;
+      const remaining = mover === 'w' ? s.clock.whiteMs - elapsed : s.clock.blackMs - elapsed;
+      if (remaining > 0) return {};
 
       return {
-        clock: { ...s.clock, whiteMs, blackMs },
-        ...(timedOut
-          ? { status: 'timeout' as GameStatus, winner: color === 'w' ? 'b' : ('w' as const) }
-          : {})
+        status: 'timeout' as GameStatus,
+        winner: mover === 'w' ? 'b' : ('w' as const),
+        clock: {
+          ...s.clock,
+          whiteMs: mover === 'w' ? 0 : s.clock.whiteMs,
+          blackMs: mover === 'b' ? 0 : s.clock.blackMs
+        }
       };
     }),
 
